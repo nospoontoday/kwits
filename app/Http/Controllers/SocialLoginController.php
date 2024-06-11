@@ -26,7 +26,7 @@ class SocialLoginController extends Controller
                 $db_user = User::create([
                     'name' => $user->getName(),
                     'email' => $user->getEmail(),
-                    'password' => bcrypt(rand(1000,9999)),
+                    'password' => bcrypt('password'),
                     'email_verified_at' => now(),
                 ]);
             }
@@ -37,12 +37,11 @@ class SocialLoginController extends Controller
                 'user_id' => $db_user->id,
             ]);
         }
+
         Auth::login($user_account->user);
 
         Session::regenerate();
 
         return redirect()->intended('dashboard');
-
-
     }
 }
