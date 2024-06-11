@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\SocialLoginController;
 use Illuminate\Support\Facades\Route;
