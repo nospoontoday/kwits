@@ -35,6 +35,26 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class, 'created_by');
+    }
+
+    public function expenseSplits()
+    {
+        return $this->hasMany(ExpenseSplit::class);
+    }
+
+    public function paymentsSent()
+    {
+        return $this->hasMany(Payment::class, 'from_user_id');
+    }
+
+    public function paymentsReceived()
+    {
+        return $this->hasMany(Payment::class, 'to_user_id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *
