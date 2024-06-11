@@ -49,6 +49,16 @@ class User extends Authenticatable
         return $this->hasMany(Payment::class, 'to_user_id');
     }
 
+    public function contacts()
+    {
+        return $this->hasMany(Contact::class);
+    }
+
+    public function contactOf()
+    {
+        return $this->hasMany(Contact::class, 'contact_id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *
