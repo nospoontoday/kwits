@@ -11,13 +11,15 @@ return new class extends Migration
         Schema::create('expenses', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('group_id');
-            $table->uuid('created_by');
+            $table->uuid('user_id'); // The user who created the expense
             $table->string('description');
             $table->decimal('amount', 10, 2);
-            $table->timestamp('expense_date');
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
+            $table->date('expense_date');
+            $table->enum('split_type', ['equally', 'exact', 'single_payer', 'full_amount_each'])->default('equally');
             $table->timestamps();
+
+            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

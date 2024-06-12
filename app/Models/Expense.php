@@ -5,22 +5,41 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+
 
 class Expense extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['id', 'group_id', 'created_by', 'description', 'amount', 'expense_date'];
-    public $incrementing = false;
-    protected $keyType = 'string';
+    protected $fillable = ['id', 'group_id', 'user_id', 'description', 'amount', 'expense_date', 'split_type'];
 
-    public function splits()
+    public $incrementing = false; // Disable auto-incrementing
+    protected $keyType = 'string'; // Set the primary key type to string
+
+    protected static function boot()
     {
-        return $this->hasMany(ExpenseSplit::class);
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
     }
 
-    public function creator()
+    public function group()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(Group::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function members()
+    {
+        return $this->hasMany(ExpenseMember::class);
     }
 }
