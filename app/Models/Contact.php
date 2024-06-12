@@ -10,7 +10,7 @@ class Contact extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['user_id', 'contact_id'];
+    protected $fillable = ['user_id', 'contact_id', 'status'];
 
     public function user()
     {

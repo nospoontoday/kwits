@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('contacts', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id'); // The user who adds the contact
-            $table->uuid('contact_id'); // The contact being added
+            $table->uuid('user_id'); // The user who sends the contact request
+            $table->uuid('contact_id'); // The user who receives the contact request
+            $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
             $table->timestamps();
 
             // Foreign key constraints
