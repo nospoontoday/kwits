@@ -90,24 +90,35 @@ class GroupController extends Controller
         // Calculate the debts for expenses
         foreach ($group->expenses as $expense) {
             foreach ($expense->members as $expenseMember) {
-                if ($expense->user_id !== $expenseMember->user_id) {
-                    if ($expense->user_id === $userId) {
-                        // If the logged-in user created the expense, others owe them
+                if ($expense->user_id === $userId) {
+                    // If the logged-in user created the expense, others owe them
+                    if (isset($balances[$expenseMember->user_id])) {
                         $balances[$expenseMember->user_id] += $expenseMember->amount;
-                    } elseif ($expenseMember->user_id === $userId) {
-                        // If the logged-in user is part of the expense, they owe the creator
+                    }
+                } elseif ($expenseMember->user_id === $userId) {
+                    // If the logged-in user is part of the expense, they owe the creator
+                    if (isset($balances[$expense->user_id])) {
                         $balances[$expense->user_id] -= $expenseMember->amount;
                     }
                 }
             }
         }
-
+        
         // Calculate the payments
         foreach ($group->payments as $payment) {
+
             if ($payment->payer_id === $userId) {
-                $balances[$payment->payee_id] -= $payment->amount;
+                // If the logged-in user created the payment, they owe more
+
+                if (isset($balances[$payment->payee_id])) {
+                    $balances[$payment->payee_id] += $payment->amount;
+                }
             } elseif ($payment->payee_id === $userId) {
-                $balances[$payment->payer_id] += $payment->amount;
+                // If the logged-in user received the payment, tthey owe less
+
+                if (isset($balances[$payment->payer_id])) {
+                    $balances[$payment->payer_id] -= $payment->amount;
+                }
             }
         }
 
@@ -134,57 +145,66 @@ class GroupController extends Controller
     {
         $group = Group::with(['members', 'expenses.members', 'payments'])
             ->findOrFail($groupId);
-
+    
         $userId = Auth::id();
         $balances = [];
-
+    
         // Initialize balances for each member
         foreach ($group->members as $member) {
             if ($member->id !== $userId) {
                 $balances[$member->id] = 0;
             }
         }
-
+    
         // Calculate the debts for expenses
         foreach ($group->expenses as $expense) {
             foreach ($expense->members as $expenseMember) {
-                if ($expense->user_id !== $expenseMember->user_id) {
-                    if ($expense->user_id === $userId) {
-                        // If the logged-in user created the expense, others owe them
-                        $balances[$expenseMember->user_id] += $expenseMember->amount;
-                    } elseif ($expenseMember->user_id === $userId) {
-                        // If the logged-in user is part of the expense, they owe the creator
-                        $balances[$expense->user_id] -= $expenseMember->amount;
+                if ($expense->user_id === $userId) {
+                    // If the logged-in user created the expense, others owe them
+                    if (isset($balances[$expenseMember->user_id])) {
+                        $balances[$expenseMember->user_id] -= $expenseMember->amount;
+                    }
+                } elseif ($expenseMember->user_id === $userId) {
+                    // If the logged-in user is part of the expense, they owe the creator
+                    if (isset($balances[$expense->user_id])) {
+                        $balances[$expense->user_id] += $expenseMember->amount;
                     }
                 }
             }
         }
-
+    
         // Calculate the payments
         foreach ($group->payments as $payment) {
             if ($payment->payer_id === $userId) {
-                $balances[$payment->payee_id] -= $payment->amount;
+                // If the logged-in user made the payment, they owe less
+                if (isset($balances[$payment->payee_id])) {
+                    $balances[$payment->payee_id] -= $payment->amount;
+                }
             } elseif ($payment->payee_id === $userId) {
-                $balances[$payment->payer_id] += $payment->amount;
+                // If the logged-in user received the payment, they owe less
+                if (isset($balances[$payment->payer_id])) {
+                    $balances[$payment->payer_id] += $payment->amount;
+                }
             }
         }
-
+    
         // Prepare the result
         $oweYou = [];
         foreach ($balances as $memberId => $balance) {
-            if ($balance < 0) {
+            if ($balance > 0) {
                 $oweYou[] = [
                     'user_id' => $memberId,
                     'name' => $group->members->firstWhere('id', $memberId)->name,
-                    'amount' => -$balance, // Convert to positive value
+                    'amount' => $balance,
                 ];
             }
         }
-
+    
         return response()->json([
             'success' => true,
             'message' => 'Owe You list retrieved successfully.',
             'data' => $oweYou,
         ]);
     }
+    
 }
