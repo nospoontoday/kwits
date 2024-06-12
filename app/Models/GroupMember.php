@@ -8,9 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class GroupMember extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory;
 
     protected $fillable = ['id', 'group_id', 'user_id'];
-    public $incrementing = false;
     protected $keyType = 'string';
 }

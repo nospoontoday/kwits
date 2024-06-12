@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Group extends Model
 {
@@ -14,6 +15,17 @@ class Group extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
+    }
+
     /**
      * The user who created the group.
      */
@@ -22,11 +34,8 @@ class Group extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /**
-     * The members of the group.
-     */
     public function members()
     {
-        return $this->hasMany(GroupMember::class);
+        return $this->belongsToMany(User::class, 'group_members');
     }
 }
