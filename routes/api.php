@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\GroupController;
@@ -28,4 +29,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/groups/{groupId}/owe-you', [GroupController::class, 'getOweYouList']);
 
     Route::post('/expenses', [ExpenseController::class, 'store']);
+
+    Route::post('/messages', [ChatController::class, 'storeMessage']);
+    Route::get('/messages/{groupId}', [ChatController::class, 'index']);
 });

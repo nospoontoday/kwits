@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class Group extends Model
+class ChatMessage extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['id', 'name', 'created_by'];
+    protected $fillable = ['id', 'group_id', 'user_id', 'message', 'type'];
+
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -26,18 +27,13 @@ class Group extends Model
         });
     }
 
-    public function members()
+    public function group()
     {
-        return $this->belongsToMany(User::class, 'group_members');
+        return $this->belongsTo(Group::class);
     }
 
-    public function expenses()
+    public function user()
     {
-        return $this->hasMany(Expense::class);
-    }
-
-    public function payments()
-    {
-        return $this->hasMany(Payment::class);
+        return $this->belongsTo(User::class);
     }
 }

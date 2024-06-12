@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CreateExpenseRequest;
+use App\Models\ChatMessage;
 use App\Models\Expense;
 use App\Models\ExpenseMember;
 use App\Models\Group;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ExpenseController extends Controller
 {
@@ -65,6 +66,15 @@ class ExpenseController extends Controller
                     }
                     break;
             }
+
+            // Store the expense in the chat log as well
+            ChatMessage::create([
+                'id' => (string) Str::uuid(),
+                'group_id' => $group->id,
+                'user_id' => Auth::id(),
+                'message' => "Expense created: {$request->description}, Amount: {$request->amount}",
+                'type' => 'expense',
+            ]);
 
             return response()->json([
                 'success' => true,

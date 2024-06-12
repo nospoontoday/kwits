@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\AddGroupMemberRequest;
+use App\Models\ChatMessage;
 use App\Models\Contact;
 
 class GroupController extends Controller
@@ -134,6 +135,24 @@ class GroupController extends Controller
             }
         }
 
+        // Serialize the oweMe list into a readable format
+        $oweMeList = collect($oweMe)->map(function ($item) {
+            return "{$item['name']} owes you {$item['amount']}";
+        })->implode(', ');
+
+        if (empty($oweMeList)) {
+            $oweMeList = "No one owes you anything.";
+        }
+
+        // Create chat message
+        ChatMessage::create([
+            'id' => (string) Str::uuid(),
+            'group_id' => $groupId,
+            'user_id' => $userId,
+            'message' => "You owe me list: $oweMeList",
+            'type' => 'info',
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Owe Me list retrieved successfully.',
@@ -200,6 +219,24 @@ class GroupController extends Controller
             }
         }
     
+        // Serialize the oweYou list into a readable format
+        $oweYouList = collect($oweYou)->map(function ($item) {
+            return "You owe {$item['name']} {$item['amount']}";
+        })->implode(', ');
+
+        if (empty($oweYouList)) {
+            $oweYouList = "You don't owe anyone anything.";
+        }
+
+        // Create chat message
+        ChatMessage::create([
+            'id' => (string) Str::uuid(),
+            'group_id' => $groupId,
+            'user_id' => $userId,
+            'message' => "I owe you list: $oweYouList",
+            'type' => 'info',
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Owe You list retrieved successfully.',
