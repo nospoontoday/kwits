@@ -17,8 +17,4 @@ Route::view('profile', 'profile')
 Route::get('socialite/{driver}', [SocialLoginController::class, 'toProvider'])->where('driver', 'google');
 Route::get('auth/{driver}/login', [SocialLoginController::class, 'handleCallback'])->where('driver', 'google');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::post('/groups', [GroupController::class, 'store']);
-});
-
 require __DIR__.'/auth.php';
