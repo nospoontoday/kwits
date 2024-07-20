@@ -11,9 +11,22 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\AddGroupMemberRequest;
 use App\Models\ChatMessage;
 use App\Models\Contact;
+use Illuminate\Support\Facades\Request;
 
 class GroupController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $groups = $user->groups()->with(['members', 'expenses', 'payments'])->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $groups,
+        ]);
+    }
+
     public function store(CreateGroupRequest $request): JsonResponse
     {
         try {
