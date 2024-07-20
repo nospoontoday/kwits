@@ -24,6 +24,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/contacts/request', [ContactController::class, 'sendRequest']);
     Route::post('/contacts/accept', [ContactController::class, 'acceptRequest']);
     
+    Route::get('/groups', [GroupController::class, 'index']);
     Route::post('/groups', [GroupController::class, 'store']);
     Route::post('/groups/members', [GroupController::class, 'addMembers']);
     Route::get('/groups/{groupId}/owe-me', [GroupController::class, 'getOweMeList']);
