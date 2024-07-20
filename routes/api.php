@@ -15,6 +15,7 @@ Route::get('/user', function (Request $request) {
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/social-login', [AuthController::class, 'socialLogin']);
 
 Route::middleware('auth:api')->group(function () {
     
