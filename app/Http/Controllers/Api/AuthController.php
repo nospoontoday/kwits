@@ -16,38 +16,38 @@ class AuthController extends Controller
 {
     public function socialLogin(Request $request)
     {
-        try {
+        $token = $request->input('token');
 
-            $email = $request->input('email');
-            $name = $request->input('name');
+        // Verify the token with Google
+        $client = new Client();
+        $response = $client->get('https://oauth2.googleapis.com/tokeninfo', [
+            'query' => ['id_token' => $token]
+        ]);
 
-            // Check if user already exists
-            $user = User::where('email', $email)->first();
+        $googleUser = json_decode($response->getBody(), true);
 
-            if (!$user) {
-                // Create a new user
-                $user = User::create([
-                    'name' => $name,
-                    'email' => $email,
-                    'password' => bcrypt('password'), // Generate a random password
-                ]);
-            }
+        // Check if user exists
+        $user = User::where('email', $googleUser['email'])->first();
 
-            // Log the user in
-            Auth::login($user, true);
-
-            // Generate an API token
-            $token = $user->createToken(config('api.token'))->accessToken;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Login successful',
-                'token' => $token,
+        if (!$user) {
+            // Create new user
+            $user = User::create([
+                'name' => $googleUser['name'],
+                'email' => $googleUser['email'],
+                'password' => bcrypt('password')
             ]);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Invalid token'], 401);
         }
+
+        Auth::login($user);
+
+        $token = $user->createToken(config('api.token'))->accessToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'user' => $user,
+            'token' => $token
+        ]);
     }
 
     public function login(AuthRequest $request)

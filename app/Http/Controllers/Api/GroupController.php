@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Requests\CreateGroupRequest;
-use App\Models\Group;
+use App\Http\Requests\CreateGroupRequest;use App\Models\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -15,7 +14,7 @@ use Illuminate\Support\Facades\Request;
 
 class GroupController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $user = Auth::user();
 
