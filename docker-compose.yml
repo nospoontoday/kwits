@@ -27,6 +27,7 @@ services:
             - meilisearch
             - mailpit
             - selenium
+            - chat
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -100,6 +101,23 @@ services:
             - '/dev/shm:/dev/shm'
         networks:
             - sail
+    chat:
+        build:
+            context: ./chat
+            dockerfile: Dockerfile
+        image: chat-app
+        ports:
+            - '${CHAT_PORT:-5000}:5000'
+        environment:
+            NODE_ENV: 'development'  # or 'production'
+        volumes:
+            - './chat:/usr/src/app'
+            - '/usr/src/app/node_modules'
+        networks:
+            - sail
+        depends_on:
+            - mysql
+            - redis
 networks:
     sail:
         driver: bridge
