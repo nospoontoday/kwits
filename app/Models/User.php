@@ -19,6 +19,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
+        'email_verified_at',
+        'is_admin'
     ];
 
     protected $hidden = [
@@ -43,7 +46,7 @@ class User extends Authenticatable
 
     public function expenses()
     {
-        return $this->hasMany(Expense::class, 'created_by');
+        return $this->hasMany(Expense::class, 'owner_id');
     }
 
     public function expenseSplits()

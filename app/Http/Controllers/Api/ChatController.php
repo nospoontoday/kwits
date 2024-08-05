@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreMessageRequest;
-use App\Models\ChatMessage;
+use App\Models\Message;
 use App\Models\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
@@ -24,7 +24,7 @@ class ChatController extends Controller
             ], 403);
         }
 
-        $message = ChatMessage::create([
+        $message = Message::create([
             'id' => (string) Str::uuid(),
             'group_id' => $request->group_id,
             'user_id' => Auth::id(),
@@ -40,7 +40,7 @@ class ChatController extends Controller
 
     public function index($groupId): JsonResponse
     {
-        $messages = ChatMessage::where('group_id', $groupId)->get();
+        $messages = Message::where('group_id', $groupId)->get();
 
         return response()->json([
             'success' => true,

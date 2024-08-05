@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CreateExpenseRequest;
-use App\Models\ChatMessage;
+use App\Models\Message;
 use App\Models\Expense;
 use App\Models\ExpenseMember;
 use App\Models\Group;
@@ -68,7 +68,7 @@ class ExpenseController extends Controller
             }
 
             // Store the expense in the chat log as well
-            ChatMessage::create([
+            Message::create([
                 'id' => (string) Str::uuid(),
                 'group_id' => $group->id,
                 'user_id' => Auth::id(),

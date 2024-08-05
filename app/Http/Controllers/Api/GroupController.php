@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\AddGroupMemberRequest;
-use App\Models\ChatMessage;
+use App\Models\Message;
 use App\Models\Contact;
 use Illuminate\Support\Facades\Request;
 
@@ -32,7 +32,7 @@ class GroupController extends Controller
             $group = Group::create([
                 'id' => (string) Str::uuid(),
                 'name' => $request->name,
-                'created_by' => Auth::id(),
+                'owner_id' => Auth::id(),
             ]);
 
             // Add the creator as a member of the group
@@ -57,7 +57,7 @@ class GroupController extends Controller
         $group = Group::findOrFail($request->group_id);
 
         // Check if the authenticated user is the creator of the group
-        if ($group->created_by != Auth::id()) {
+        if ($group->owner_id != Auth::id()) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to add members to this group.',
@@ -157,7 +157,7 @@ class GroupController extends Controller
         }
 
         // Create chat message
-        ChatMessage::create([
+        Message::create([
             'id' => (string) Str::uuid(),
             'group_id' => $groupId,
             'user_id' => $userId,
@@ -241,7 +241,7 @@ class GroupController extends Controller
         }
 
         // Create chat message
-        ChatMessage::create([
+        Message::create([
             'id' => (string) Str::uuid(),
             'group_id' => $groupId,
             'user_id' => $userId,

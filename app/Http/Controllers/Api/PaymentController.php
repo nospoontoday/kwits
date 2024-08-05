@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CreatePaymentRequest;
-use App\Models\ChatMessage;
+use App\Models\Message;
 use App\Models\Group;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
@@ -49,7 +49,7 @@ class PaymentController extends Controller
 
 
         // Store the payment in the chat log as well
-        ChatMessage::create([
+        Message::create([
             'id' => (string) Str::uuid(),
             'group_id' => $group->id,
             'user_id' => Auth::id(),

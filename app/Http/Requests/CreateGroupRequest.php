@@ -22,7 +22,7 @@ class CreateGroupRequest extends FormRequest
                 'string',
                 'max:255',
                 Rule::unique('groups')->where(function ($query) {
-                    return $query->where('created_by', $this->user()->id);
+                    return $query->where('owner_id', $this->user()->id);
                 }),
             ],
         ];

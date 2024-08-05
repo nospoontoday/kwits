@@ -11,7 +11,7 @@ class Group extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['id', 'name', 'created_by'];
+    protected $fillable = ['name', 'owner_id', 'description', 'last_message_id'];
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -34,6 +34,16 @@ class Group extends Model
     public function expenses()
     {
         return $this->hasMany(Expense::class);
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function payments()

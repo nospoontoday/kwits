@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class ChatMessage extends Model
+class Message extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['id', 'group_id', 'user_id', 'message', 'type'];
+    protected $fillable = ['message', 'sender_id', 'group_id', 'receiver_id', 'type'];
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -32,8 +32,18 @@ class ChatMessage extends Model
         return $this->belongsTo(Group::class);
     }
 
-    public function user()
+    public function sender()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function receiver()
+    {
+        return $this->belongsTo(User::class, 'receiver_id');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(MessageAttachment::class);
     }
 }
