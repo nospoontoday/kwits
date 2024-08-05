@@ -53,17 +53,10 @@ class DatabaseSeeder extends Seeder
         // Retrieve messages without a group and order them by creation date
         $messages = Message::whereNull('group_id')->orderBy('created_at')->get();
 
-        // Debug: Check message count and sample data
-        echo 'Total messages: ' . $messages->count() . PHP_EOL;
-        echo 'Sample messages: ' . $messages->take(5)->toJson() . PHP_EOL;
-
         // Group messages by sender and receiver pair
         $conversations = $messages->groupBy(function ($message) {
             return collect([$message->sender_id, $message->receiver_id])->sort()->implode('_');
         });
-
-        // Debug: Check grouped conversations
-        echo 'Grouped conversations count: ' . $conversations->count() . PHP_EOL;
 
         // Prepare conversations for insertion
         $conversationData = $conversations->map(function ($groupedMessages) {
@@ -76,9 +69,6 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => Carbon::now(),
             ];
         })->values();
-
-        // Debug: Check conversation data
-        echo 'Conversation data: ' . $conversationData->toJson() . PHP_EOL;
 
         // Insert or ignore conversations
         Conversation::insertOrIgnore($conversationData->toArray());
