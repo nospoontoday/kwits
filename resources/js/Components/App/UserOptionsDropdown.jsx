@@ -75,6 +75,7 @@ export default function UserOptionsDropdown({ conversation }) {
                                         {!conversation.blocked_at && (
                                             <>
                                                 <LockClosedIcon className="w-4 h-4 mr-2" />
+                                                Block User
                                             </>
                                         )}
                                     </button>
