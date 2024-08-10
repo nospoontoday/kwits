@@ -8,9 +8,6 @@ use App\Http\Requests\Api\AuthRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client;
-use Firebase\JWT\JWT;
-use Firebase\JWT\JWK;
-use Firebase\JWT\Key;
 
 class AuthController extends Controller
 {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\MessageSent;
 use App\Http\Requests\CreateGroupRequest;use App\Models\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;

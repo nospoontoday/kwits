@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         // Create the owner user
         $owner = User::factory()->create([
             'name' => 'John Doe',
-            'email' => 'john@example.com',
+            'email' => 'oliverjohnpr2013@gmail.com',
             'password' => bcrypt('password'),
             'is_admin' => true,
         ]);

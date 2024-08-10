@@ -18,7 +18,7 @@ class MessageFactory extends Factory
      */
     public function definition(): array
     {
-        $receiver = User::where('email', 'john@example.com')->first();
+        $receiver = User::where('email', 'oliverjohnpr2013@gmail.com')->first();
         $senderId = $this->faker->randomElement([0, $receiver->id]);
         if($senderId === 0) {
             $senderId = $this->faker->randomElement(User::where('id', '!=', $receiver->id)->pluck('id')->toArray());
