@@ -8,6 +8,14 @@ use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified'])->group(function() {
     Route::get('/', [HomeController::class, 'home'])->name('dashboard');
+
+    Route::get('/user/{user}', function() {
+
+    })->name('chat.user');
+
+    Route::get('/group/{user}', function() {
+        
+    })->name('chat.group');
 });
 
 Route::middleware('auth')->group(function () {

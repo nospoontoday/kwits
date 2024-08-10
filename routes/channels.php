@@ -1,7 +1,8 @@
 <?php
 
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('chat.{id}', function ($user, $id) {
-    return $user->id === $id;
+Broadcast::channel('online', function ($user) {
+    return $user ? new UserResource($user) : null;
 });
