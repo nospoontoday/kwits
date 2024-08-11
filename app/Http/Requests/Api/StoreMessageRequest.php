@@ -16,8 +16,11 @@ class StoreMessageRequest extends FormRequest
     public function rules()
     {
         return [
-            'group_id' => 'required|exists:groups,id',
-            'message' => 'required|string',
+            'group_id' => 'required_without:receiver_id|nullable|exists:groups,id',
+            'receiver_id' => 'required_without:group_id|nullable|exists:users,id',
+            'message' => 'nullable|string',
+            'attachments' => 'nullable|array|max:10',
+            'attachments.*' => 'file|max:1024000'
         ];
     }
 

@@ -78,7 +78,7 @@ class MessageController extends Controller
         return response('', 204);
     }
 
-    public function storeMessage(StoreMessageRequest $request)
+    public function store(StoreMessageRequest $request)
     {
         $data = $request->validated();
         $data['sender_id'] = auth()->id();
