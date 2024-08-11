@@ -33,7 +33,8 @@ export default function AuthenticatedLayout({ header, children }) {
                 .listen("SocketMessage", (e) => {
 
                     const message = e.message;
-                    emit("message.create", message)
+                    emit("message.create", message);
+                    emit("message.created", message);
                     if (message.sender_id === user.id) {
                         return;
                     }
