@@ -26,6 +26,11 @@ function Home({ selectedConversation = null, messages = null }) {
     }
 
     const loadMoreMessages = useCallback(() => {
+
+        if(noMoreMessages) {
+            return;
+        }
+
         const firstMessage = localMessages[0];
         axios
             .get(route("message.loadOlder", firstMessage.id))
@@ -45,7 +50,7 @@ function Home({ selectedConversation = null, messages = null }) {
                     return [...data.data.reverse(), ...previousMessages]
                 })
             })
-    }, [localMessages])
+    }, [localMessages, noMoreMessages])
 
     useEffect(() => {
         setTimeout(() => {
@@ -55,6 +60,9 @@ function Home({ selectedConversation = null, messages = null }) {
         }, 10);
 
         const offCreated = on("message.create", messageCreated);
+
+        setScrollFromBottom(0);
+        setNoMoreMessages(false);
 
         return () => {
             offCreated();
