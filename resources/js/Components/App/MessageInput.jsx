@@ -1,14 +1,14 @@
-import { useState, Fragment } from "react";
+import { useState } from "react";
 import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import NewMessageInput from './NewMessageInput';
 import axios from "axios";
 import EmojiPicker from "emoji-picker-react";
-import { Popover, Transition } from "@headlessui/react";
-import { isAudio, isImage, isPDF } from "@/helpers";
+import { Popover } from "@headlessui/react";
+import { isAudio, isImage } from "@/helpers";
 import AttachmentPreview from "./AttachmentPreview";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 
-const MessageInput = ({ conversation = null}) => {
+const MessageInput = ({ conversation = null }) => {
     const [newMessage, setNewMessage] = useState("");
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [messageSending, setMessageSending] = useState(false);
@@ -22,26 +22,26 @@ const MessageInput = ({ conversation = null}) => {
             return {
                 file: file,
                 url: URL.createObjectURL(file),
-            }
+            };
         });
         event.target.value = null;
 
         setChosenFiles((previousFiles) => {
             return [...previousFiles, ...updatedFiles];
-        })
-    }
+        });
+    };
 
     const onSendClick = () => {
-        if(messageSending) {
+        if (messageSending) {
             return;
         }
 
-        if(newMessage.trim() === "" && chosenFiles.length === 0){
+        if (newMessage.trim() === "" && chosenFiles.length === 0) {
             setInputErrorMessage("Message is required");
 
             setTimeout(() => {
                 setInputErrorMessage("");
-            }, 3000)
+            }, 3000);
 
             return;
         }
@@ -53,8 +53,8 @@ const MessageInput = ({ conversation = null}) => {
             formData.append("attachments[]", file.file);
         });
 
-        if(conversation.is_user) {
-            formData.append("receiver_id", conversation.id)
+        if (conversation.is_user) {
+            formData.append("receiver_id", conversation.id);
         } else if (conversation.is_group) {
             formData.append("group_id", conversation.id);
         }
@@ -68,41 +68,44 @@ const MessageInput = ({ conversation = null}) => {
                 );
 
                 setUploadProgress(progress);
-            }
-        }).then((response) => {
-            setNewMessage("");
-            setMessageSending(false);
-
-            setUploadProgress(0);
-            setChosenFiles([]);
-        }).catch((err) => {
-            setMessageSending(false);
-
-            setChosenFiles([]);
-            const message = err?.response?.data?.message;
-            setInputErrorMessage(
-                message || "An error occurred while sending message"
-            );
-        });
-    }
+            },
+        })
+            .then(() => {
+                setNewMessage("");
+                setMessageSending(false);
+                setTimeout(() => {
+                    setUploadProgress(0);
+                }, 500);
+                setChosenFiles([]);
+            })
+            .catch((err) => {
+                setMessageSending(false);
+                setUploadProgress(0);
+                setChosenFiles([]);
+                const message = err?.response?.data?.message;
+                setInputErrorMessage(
+                    message || "An error occurred while sending message"
+                );
+            });
+    };
 
     const onLikeClick = () => {
-        if(messageSending) {
+        if (messageSending) {
             return;
         }
 
         const data = {
             message: "👍",
-        }
+        };
 
-        if(conversation.is_user) {
+        if (conversation.is_user) {
             data["receiver_id"] = conversation.id;
         } else if (conversation.is_group) {
             data["group_id"] = conversation.id;
         }
 
         axios.post(route("message.store"), data);
-    }
+    };
 
     return (
         <div className="flex flex-wrap items-start border-t border-slate-700 py-3">
@@ -131,7 +134,7 @@ const MessageInput = ({ conversation = null}) => {
                         <FaceSmileIcon className="w-6 h-6" />
                     </Popover.Button>
                     <Popover.Panel className="absolute z-10 left-0 bottom-full">
-                        <EmojiPicker theme="dark" onEmojiClick={event => setNewMessage(newMessage + event.emoji)}></EmojiPicker>
+                        <EmojiPicker theme="dark" onEmojiClick={event => setNewMessage(newMessage + event.emoji)} />
                     </Popover.Panel>
                 </Popover>
             </div>
@@ -147,19 +150,16 @@ const MessageInput = ({ conversation = null}) => {
                         disabled={messageSending}
                         className="btn btn-info rounded-1-none"
                     >
-                        {/* {messageSending && (
-                            <span className="loading loading-spinner loadding-xs"></span>
-                        )} */}
                         <PaperAirplaneIcon className="w-6" />
                         <span className="hidden-sm:inline">Send</span>
                     </button>
                 </div>
-                {!!uploadProgress && (
+                {uploadProgress > 0 && (
                     <progress
                         className="progress progress-info w-full"
                         value={uploadProgress}
                         max="100"
-                    ></progress>
+                    />
                 )}
                 {inputErrorMessage && (
                     <p className="text-xs text-red-400">{inputErrorMessage}</p>
@@ -208,7 +208,6 @@ const MessageInput = ({ conversation = null}) => {
                         </div>
                     ))}
                 </div>
-
             </div>
             <div className="order-3 xs:order-3 p-2 flex">
                 <button onClick={onLikeClick} className="p-1 text-gray-400 hover:text-gray-300">
