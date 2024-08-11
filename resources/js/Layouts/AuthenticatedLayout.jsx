@@ -2,13 +2,74 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import { useEventBus } from '@/EventBus';
 import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const page = usePage();
     const user = page.props.auth.user;
+    const conversations = page.props.conversations;
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+    const {emit} = useEventBus();
+
+    useEffect(() => {
+        conversations.forEach((conversation) => {
+            let channel = `message.group.${conversation.id}`;
+    
+            if (conversation.is_user) {
+                channel = `message.user.${[
+                    user.id,
+                    conversation.id
+                ]
+                    .sort()
+                    .join(".")}`;
+            }
+    
+            Echo.private(channel)
+                .error((err) => {
+                    console.error(err);
+                })
+                .listen("SocketMessage", (e) => {
+
+                    const message = e.message;
+                    emit("message.create", message)
+                    if (message.sender_id === user.id) {
+                        return;
+                    }
+    
+                    emit("newMessageNotification", {
+                        user: message.sender,
+                        group_id: message.group_id,
+                        message:
+                            message.message ||
+                            `Shared ${
+                                message.attachments.length === 1
+                                    ? "an attachment"
+                                    : message.attachments.length + " attachments"
+                            }`
+                    })
+                });
+        });
+    
+        // Return the cleanup function after the loop
+        return () => {
+            conversations.forEach((conversation) => {
+                let channel = `message.group.${conversation.id}`;
+    
+                if (conversation.is_user) {
+                    channel = `message.user.${[
+                        user.id,
+                        conversation.id
+                    ]
+                        .sort()
+                        .join(".")}`;
+                }
+                Echo.leave(channel);
+            });
+        };
+    }, [conversations]);
+    
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col h-screen">
