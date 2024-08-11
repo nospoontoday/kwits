@@ -12,7 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function() {
 
     Route::get('/user/{user}', [MessageController::class, 'byUser'])->name('chat.user');
 
-    Route::get('/group/{user}', [MessageController::class, 'byGroup'])->name('chat.group');
+    Route::get('/group/{group}', [MessageController::class, 'byGroup'])->name('chat.group');
 
     Route::post('/message', [MessageController::class, 'store'])->name('message.store');
     
