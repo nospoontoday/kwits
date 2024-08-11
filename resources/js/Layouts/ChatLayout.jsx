@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 const ChatLayout = ({ children }) => {
     const page = usePage();
     const conversations = page.props.conversations;
-    const selectedConversation = page.props.selectedConvesation;
+    const selectedConversation = page.props.selectedConversation;
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState({});
@@ -86,9 +86,11 @@ const ChatLayout = ({ children }) => {
     return (
         <>
             <div className="flex-1 w-full flex overflow-hidden">
-                <div className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
-                    selectedConversation ? "-ml-[100%] sm:ml-0" : ""
-                }`}>
+            <div
+    className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
+        selectedConversation ? "sm:ml-0 -ml-[100%]" : ""
+    }`}
+>
                     <div className="flex items-center justify-between py-2 px-3 text-xl font-medium text-gray-200">
                         My Conversations
                         <div 
