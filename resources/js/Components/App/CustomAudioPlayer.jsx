@@ -43,7 +43,7 @@ const CustomAudioPlayer = ({file, showVolume = tre}) => {
     }
 
     return (
-        <div class="w-full flex items-centerr gap-2 py-2 px-3 rounded-md bg-slate-800">
+        <div className="w-full flex items-centerr gap-2 py-2 px-3 rounded-md bg-slate-800">
             <audio 
                 ref={audioRef}
                 src={file.url}
