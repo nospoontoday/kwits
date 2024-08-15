@@ -84,9 +84,11 @@ const ChatLayout = ({ children }) => {
 
             emit('toast.show', `Group ${name} was deleted`);
 
-            if(!selectedConversation || (selectedConversation.is_group && selectedConversation.id == id)) {
-                router.visit(route("dashboard"));
-            }
+            setTimeout(() => {
+                if(!selectedConversation || (selectedConversation.is_group && selectedConversation.id == id)) {
+                    router.visit(route("dashboard"));
+                }
+            }, 100); // Adjust the delay as necessary
         });
 
         return () => {
