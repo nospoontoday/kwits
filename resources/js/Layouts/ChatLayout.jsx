@@ -84,10 +84,8 @@ const ChatLayout = ({ children }) => {
 
             emit('toast.show', `Group ${name} was deleted`);
 
-            if(!selectedConversation || selectedConversation.is_group && selectedConversation.id == id) {
+            if(!selectedConversation || (selectedConversation.is_group && selectedConversation.id == id)) {
                 router.visit(route("dashboard"));
-            } else {
-                console.log("Condition not met");
             }
         });
 
