@@ -25,7 +25,7 @@ export default function GroupModal({show = false, onClose = () => {}}) {
     });
 
     const users = conversations.filter((c) => !c.is_group);
-    console.log(users);
+
     const createOrUpdateGroup = (e) => {
         e.preventDefault();
 

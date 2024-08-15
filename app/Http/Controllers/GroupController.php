@@ -1,49 +1,35 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
-use App\Events\MessageSent;
-use App\Http\Requests\CreateGroupRequest;use App\Models\Group;
+use App\Http\Requests\CreateGroupRequest;
+use App\Models\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\AddGroupMemberRequest;
+use App\Http\Requests\StoreGroupRequest;
+use App\Http\Requests\UpdateGroupRequest;
+use App\Jobs\DeleteGroupJob;
 use App\Models\Message;
 use App\Models\Contact;
 use Illuminate\Support\Facades\Request;
 
 class GroupController extends Controller
 {
-    public function index(Request $request)
+    public function store(StoreGroupRequest $request): JsonResponse
     {
-        $user = Auth::user();
+        $data = $request->validated();
+        $user_ids = $data['user_ids'] ?? [];
 
-        $groups = $user->groups()->with(['members', 'expenses', 'payments'])->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $groups,
-        ]);
-    }
-
-    public function store(CreateGroupRequest $request): JsonResponse
-    {
         try {
-            $group = Group::create([
-                'id' => (string) Str::uuid(),
-                'name' => $request->name,
-                'owner_id' => Auth::id(),
-            ]);
+            $group = Group::create($data);
 
             // Add the creator as a member of the group
-            $group->members()->attach(Auth::id());
+            $group->members()->attach(array_unique([Auth::id(), ...$user_ids]));
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Group created successfully and creator added as a member.',
-                'data' => $group->load('members'),
-            ], 201);
+            return redirect()->back();
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -51,6 +37,30 @@ class GroupController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function update(UpdateGroupRequest $request, Group $group)
+    {
+        $data = $request->validated();
+        $user_ids = $data['user_ids'] ?? [];
+        $group->update($data);
+
+        //Remove all users and attach new ones
+        $group->members()->detach();
+        $group->members()->attach(array_unique([Auth::id(), ...$user_ids]));
+
+        return redirect()->back();
+    }
+
+    public function destroy(Group $group)
+    {
+        if($group->owner_id !== Auth::id()) {
+            abort(403);
+        }
+
+        DeleteGroupJob::dispatch($group)->delay(now()->addSeconds(3));
+
+        return response()->json(['message' => 'Group delete was scheduled and will be deleted soon.']);
     }
 
     public function addMembers(AddGroupMemberRequest $request): JsonResponse

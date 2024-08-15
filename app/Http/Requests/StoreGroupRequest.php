@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
-class CreateGroupRequest extends FormRequest
+class StoreGroupRequest extends FormRequest
 {
     public function authorize()
     {
@@ -25,6 +25,9 @@ class CreateGroupRequest extends FormRequest
                     return $query->where('owner_id', $this->user()->id);
                 }),
             ],
+            'description' => ['nullable', 'string'],
+            'user_ids' => ['nullable', 'array'],
+            'user_ids.*' => ['integer', 'exists:users,id'],
         ];
     }
 
@@ -35,12 +38,10 @@ class CreateGroupRequest extends FormRequest
         ];
     }
 
-    protected function failedValidation(Validator $validator)
+    public function validated($key = null, $default = null)
     {
-        throw new HttpResponseException(response()->json([
-            'success' => false,
-            'message' => 'Validation errors',
-            'errors' => $validator->errors()
-        ], 422));
+        $validated = parent::validated($key, $default);
+        $validated['owner_id'] = $this->user()->id;
+        return $validated;
     }
 }
