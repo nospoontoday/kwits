@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Request;
 
 class GroupController extends Controller
 {
-    public function store(StoreGroupRequest $request): JsonResponse
+    public function store(StoreGroupRequest $request)
     {
         $data = $request->validated();
         $user_ids = $data['user_ids'] ?? [];
@@ -58,7 +58,7 @@ class GroupController extends Controller
             abort(403);
         }
 
-        DeleteGroupJob::dispatch($group)->delay(now()->addSeconds(3));
+        DeleteGroupJob::dispatch($group)->delay(now()->addSeconds(10));
 
         return response()->json(['message' => 'Group delete was scheduled and will be deleted soon.']);
     }
