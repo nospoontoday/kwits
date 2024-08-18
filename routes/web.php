@@ -9,7 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::middleware(['auth', 'verified'])->group(function() {
+Route::middleware(['auth', 'verified', 'active'])->group(function() {
     Route::get('/', [HomeController::class, 'home'])->name('dashboard');
 
     Route::get('/user/{user}', [MessageController::class, 'byUser'])->name('chat.user');
