@@ -189,7 +189,7 @@ function Home({ selectedConversation = null, messages = null }) {
 
 Home.layout = (page) => {
     return (
-        <AuthenticatedLayout user={page.props.auth.user}>
+        <AuthenticatedLayout user={page.props.auth.user.data}>
             <ChatLayout children={page} />
         </AuthenticatedLayout>
     )

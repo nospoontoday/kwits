@@ -7,7 +7,7 @@ import MessageAttachments from "./MessageAttachments";
 import MessageOptionsDropdown from "./MessageOptionsDropdown";
 
 const MessageItem = ({ message, attachmentClick }) => {
-    const currentUser = usePage().props.auth.user;
+    const currentUser = usePage().props.auth.user.data;
 
     return (
         <div

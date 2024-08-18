@@ -8,7 +8,7 @@ import GroupUsersPopover from "./GroupUsersPopover";
 import { useEventBus } from "@/EventBus";
 
 const ConversationHeader = ({ selectedConversation }) => {
-    const authUser = usePage().props.auth.user;
+    const authUser = usePage().props.auth.user.data;
     const { emit } = useEventBus();
 
     const onDeleteGroup = () => {
