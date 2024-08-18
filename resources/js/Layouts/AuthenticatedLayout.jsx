@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const page = usePage();
-    const user = page.props.auth.user;
+    const user = page.props.auth.user.data;
     const conversations = page.props.conversations;
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const {emit} = useEventBus();
