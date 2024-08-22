@@ -3,11 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreFriendRequest;
+use App\Http\Resources\FriendRequestResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class FriendController extends Controller
 {
+    public function requests(Request $request)
+    {
+        $pendingFriendships = $request->user()->getPendingFriendships();
+
+        return FriendRequestResource::collection($pendingFriendships);
+    }
+
     public function store(StoreFriendRequest $request)
     {
         $data = $request->validated();

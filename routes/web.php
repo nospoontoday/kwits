@@ -31,6 +31,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
 
     Route::post('/friend/request', [FriendController::class, 'store'])->name('friend.request');
 
+    Route::get('/friend/requests', [FriendController::class, 'requests'])->name('friend.requests');
+
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');
         Route::post('/user/change-role/{user}', [UserController::class, 'changeRole'])->name('user.changeRole');
