@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageDeleted;
 use App\Events\SocketMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreMessageRequest;
@@ -90,6 +91,11 @@ class MessageController extends Controller
             $conversation = Conversation::find($conversation->id);
             $lastMessage = $conversation->lastMessage;
         }
+
+        MessageDeleted::dispatch([
+            'prevMessage' => $lastMessage,
+            'deletedMessage' => $message
+        ]);
 
         return response()->json(['message' => $lastMessage ? new MessageResource($lastMessage) : null]);
     }

@@ -1,6 +1,6 @@
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment } from "react";
-import { EllipsisVerticalIcon, LockClosedIcon, LockOpenIcon, ShieldCheckIcon, TrashIcon, UserIcon } from "@heroicons/react/24/solid";
+import { EllipsisVerticalIcon, TrashIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { useEventBus } from "@/EventBus";
 

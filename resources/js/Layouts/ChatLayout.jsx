@@ -22,7 +22,7 @@ const ChatLayout = ({ children }) => {
         const search = ev.target.value.toLowerCase();
         setLocalConversations(
             conversations.filter((conversation) => {
-                return conversations.name.toLowerCase().includes(search);
+                return conversation.name.toLowerCase().includes(search);
             })
         )
     }
@@ -78,8 +78,8 @@ const ChatLayout = ({ children }) => {
             setShowGroupModal(true);
         });
         const offGroupDelete = on("group.deleted", ({id, name}) => {
-            setLocalConversations((olddConversations) => {
-                return olddConversations.filter((con) => con.id != id);
+            setLocalConversations((oldConversations) => {
+                return oldConversations.filter((con) => con.id != id);
             });
 
             emit('toast.show', `Group ${name} was deleted`);

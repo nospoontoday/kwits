@@ -54,7 +54,11 @@ export default function AuthenticatedLayout({ header, children }) {
                                     ? "an attachment"
                                     : message.attachments.length + " attachments"
                             }`
-                    })
+                    });
+                }).listen("MessageDeleted", (e) => {
+                    const message = e.message;
+                    const prevMessage = e.prevMessage;
+                    emit("message.deleted", {message, prevMessage: prevMessage});
                 });
 
             if(conversation.is_group) {
