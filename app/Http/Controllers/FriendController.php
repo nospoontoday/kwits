@@ -16,6 +16,13 @@ class FriendController extends Controller
         return FriendRequestResource::collection($pendingFriendships);
     }
 
+    public function confirm(Request $request, User $sender)
+    {
+        $request->user()->acceptFriendRequest($sender);
+
+        return redirect()->back();
+    }
+
     public function store(StoreFriendRequest $request)
     {
         $data = $request->validated();

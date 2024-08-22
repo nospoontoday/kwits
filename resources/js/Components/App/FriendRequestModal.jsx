@@ -28,28 +28,19 @@ export default function FriendRequestModal({ show = false, onClose = () => {} })
     }, [show]);
 
     const handleConfirm = (id) => {
-        fetch(route('friend.confirm', { id }), {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Content-Type': 'application/json'
-            }
-        })
+        axios.post(route('friend.confirm', { id }))
         .then(() => {
             emit('toast.show', 'Friend request confirmed');
-            setFriendRequests(friendRequests.filter(request => request.id !== id));
+            // Remove the confirmed request from the list
+            setFriendRequests(friendRequests.filter(request => request.sender.id !== id));
         });
     };
 
     const handleDelete = (id) => {
-        fetch(route('friend.delete', { id }), {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
+        axios.delete(route('friend.delete', { id }))
         .then(() => {
             emit('toast.show', 'Friend request deleted');
+            // Remove the deleted request from the list
             setFriendRequests(friendRequests.filter(request => request.id !== id));
         });
     };
@@ -77,7 +68,7 @@ export default function FriendRequestModal({ show = false, onClose = () => {} })
                                     </div>
                                     <div>
                                         <SecondaryButton onClick={() => handleDelete(request.id)}>Delete</SecondaryButton>
-                                        <PrimaryButton className="ms-3" onClick={() => handleConfirm(request.id)}>Confirm</PrimaryButton>
+                                        <PrimaryButton className="ms-3" onClick={() => handleConfirm(request.sender.id)}>Confirm</PrimaryButton>
                                     </div>
                                 </li>
                             ))}
