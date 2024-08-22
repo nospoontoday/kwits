@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MessageController;
@@ -27,6 +28,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
     Route::put('/group/{group}', [GroupController::class, 'update'])->name('group.update');
 
     Route::delete('/group/{group}', [GroupController::class, 'destroy'])->name('group.destroy');
+
+    Route::post('/friend/request', [FriendController::class, 'store'])->name('friend.request');
 
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');

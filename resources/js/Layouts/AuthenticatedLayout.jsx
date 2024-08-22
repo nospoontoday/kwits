@@ -1,5 +1,5 @@
 import NewMessageNotification from '@/Components/App/NewMessageNotification';
-import NewUserModal from '@/Components/App/NewUserModal';
+import NewUserModal from '@/Components/App/AddFriendModal';
 import Toast from '@/Components/App/Toast';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
@@ -10,13 +10,14 @@ import { useEventBus } from '@/EventBus';
 import { UserPlusIcon } from '@heroicons/react/24/solid';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import AddFriendModal from '@/Components/App/AddFriendModal';
 
 export default function AuthenticatedLayout({ header, children }) {
     const page = usePage();
     const user = page.props.auth.user.data;
     const conversations = page.props.conversations;
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
-    const [showNewUserModal, setShowNewUserModal] = useState(false);
+    const [showAddFriendModal, setShowAddFriendModal] = useState(false);
     const {emit} = useEventBus();
 
     useEffect(() => {
@@ -118,9 +119,9 @@ export default function AuthenticatedLayout({ header, children }) {
                             <div className="hidden sm:flex sm:items-center sm:ms-6">
                                 <div className="flex ms-3 relative">
                                     {user.is_admin && (
-                                        <PrimaryButton onClick={event => setShowNewUserModal(true)}>
+                                        <PrimaryButton onClick={event => setShowAddFriendModal(true)}>
                                             <UserPlusIcon className="h-5 w-5 mr-2" />
-                                            Add New User
+                                            Add User As Friend
                                         </PrimaryButton>
                                     )}
 
@@ -218,7 +219,7 @@ export default function AuthenticatedLayout({ header, children }) {
             </div>
             <Toast/>
             <NewMessageNotification />
-            <NewUserModal show={showNewUserModal} onClose={(event) => setShowNewUserModal(false)} />
+            <AddFriendModal show={showAddFriendModal} onClose={(event) => setShowAddFriendModal(false)} />
         </>
     );
 }
