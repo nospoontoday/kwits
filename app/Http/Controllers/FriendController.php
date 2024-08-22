@@ -41,6 +41,9 @@ class FriendController extends Controller
         }
 
         $recipient = User::where('email', $data['email'])->first();
+        if($currentUser->hasSentFriendRequestTo($recipient)) {
+            return redirect()->back()->withErrors(['email' => 'You already sent a friend request to ' . $data['email']]);
+        }
 
         if ($recipient) {
             $currentUser->befriend($recipient);
