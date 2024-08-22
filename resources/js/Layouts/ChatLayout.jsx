@@ -1,8 +1,9 @@
 import ConversationItem from "@/Components/App/ConversationItem";
+import FriendRequestModal from "@/Components/App/FriendRequestModal";
 import GroupModal from "@/Components/App/GroupModal";
 import TextInput from "@/Components/TextInput";
 import { useEventBus } from "@/EventBus";
-import { PencilSquareIcon } from "@heroicons/react/24/solid";
+import { PencilSquareIcon, UsersIcon } from "@heroicons/react/24/solid";
 import { router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 
@@ -14,6 +15,7 @@ const ChatLayout = ({ children }) => {
     const [sortedConversations, setSortedConversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState({});
     const [showGroupModal, setShowGroupModal] = useState(false);
+    const [ showFriendRequestModal, setShowFriendRequestModal ] = useState(false);
     const { on, emit } = useEventBus();
 
     const isUserOnline = (userId) => onlineUsers[userId];
@@ -163,10 +165,10 @@ const ChatLayout = ({ children }) => {
         <>
             <div className="flex-1 w-full flex overflow-hidden">
             <div
-    className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
-        selectedConversation ? "sm:ml-0 -ml-[100%]" : ""
-    }`}
->
+                className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
+                    selectedConversation ? "sm:ml-0 -ml-[100%]" : ""
+                }`}
+            >
                     <div className="flex items-center justify-between py-2 px-3 text-xl font-medium text-gray-200">
                         My Conversations
                         <div 
@@ -178,6 +180,17 @@ const ChatLayout = ({ children }) => {
                                 className="text-gray-400 hover:text-gray-200"
                             >
                                 <PencilSquareIcon className="w-4 h-4 inline-block l-2" />
+                            </button>
+                        </div>
+                        <div 
+                            className="tooltip tooltip-left"
+                            data-tip="Friend requests"
+                        >
+                            <button
+                                onClick={ev => setShowFriendRequestModal(true)}
+                                className="text-gray-400 hover:text-gray-200"
+                            >
+                                <UsersIcon className="w-4 h-4 inline-block l-2" />
                             </button>
                         </div>
                     </div>
@@ -209,6 +222,7 @@ const ChatLayout = ({ children }) => {
                 </div>
             </div>
             <GroupModal show={showGroupModal} onClose={() => setShowGroupModal(false)} />
+            <FriendRequestModal show={showFriendRequestModal} onClose={() => setShowFriendRequestModal(false)} />
         </>
     );
 }

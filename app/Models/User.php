@@ -11,10 +11,11 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Support\Str;
+use Multicaret\Acquaintances\Traits\Friendable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasUuids, HasApiTokens;
+    use HasFactory, Notifiable, HasUuids, HasApiTokens, Friendable;
 
     protected $fillable = [
         'name',
