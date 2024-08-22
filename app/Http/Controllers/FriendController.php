@@ -23,6 +23,13 @@ class FriendController extends Controller
         return redirect()->back();
     }
 
+    public function deny(Request $request, User $sender)
+    {
+        $request->user()->denyFriendRequest($sender);
+
+        return redirect()->back();
+    }
+
     public function store(StoreFriendRequest $request)
     {
         $data = $request->validated();

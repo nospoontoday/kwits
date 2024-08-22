@@ -36,12 +36,12 @@ export default function FriendRequestModal({ show = false, onClose = () => {} })
         });
     };
 
-    const handleDelete = (id) => {
-        axios.delete(route('friend.delete', { id }))
+    const handleDeny = (id) => {
+        axios.post(route('friend.deny', { id }))
         .then(() => {
-            emit('toast.show', 'Friend request deleted');
+            emit('toast.show', 'Friend request denied');
             // Remove the deleted request from the list
-            setFriendRequests(friendRequests.filter(request => request.id !== id));
+            setFriendRequests(friendRequests.filter(request => request.sender.id !== id));
         });
     };
 
@@ -67,7 +67,7 @@ export default function FriendRequestModal({ show = false, onClose = () => {} })
                                         <span>{request.sender.name} wants to be friends with you.</span>
                                     </div>
                                     <div>
-                                        <SecondaryButton onClick={() => handleDelete(request.id)}>Delete</SecondaryButton>
+                                        <SecondaryButton onClick={() => handleDeny(request.sender.id)}>Deny</SecondaryButton>
                                         <PrimaryButton className="ms-3" onClick={() => handleConfirm(request.sender.id)}>Confirm</PrimaryButton>
                                     </div>
                                 </li>

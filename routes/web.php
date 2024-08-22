@@ -35,6 +35,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
 
     Route::post('/friend/confirm/{sender}', [FriendController::class, 'confirm'])->name('friend.confirm');
 
+    Route::post('/friend/deny/{sender}', [FriendController::class, 'deny'])->name('friend.deny');
+
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');
         Route::post('/user/change-role/{user}', [UserController::class, 'changeRole'])->name('user.changeRole');
