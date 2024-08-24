@@ -70,6 +70,8 @@ class MessageController extends Controller
 
     public function destroy(Message $message)
     {
+        $lastMessage = null;
+
         if($message->sender_id !== auth()->id()) {
             return response()->json(['message' => "Forbidden"], 403);
         }
@@ -82,6 +84,11 @@ class MessageController extends Controller
             $conversation = Conversation::where('last_message_id', $message->id)->first();
         }
 
+        // If the message is the last in the conversation, delete the conversation
+        if ($conversation) {
+            $conversation->delete();
+        }
+
         $message->delete();
 
         if($group) {
@@ -89,7 +96,7 @@ class MessageController extends Controller
             $lastMessage = $group->lastMessage;
         } else if($conversation) {
             $conversation = Conversation::find($conversation->id);
-            $lastMessage = $conversation->lastMessage;
+            $lastMessage = $conversation->lastMessage ?? null;
         }
 
         MessageDeleted::dispatch([

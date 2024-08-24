@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Support\Str;
@@ -71,6 +72,16 @@ class User extends Authenticatable
         return $this->hasMany(Contact::class);
     }
 
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function receivedMessages()
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
     public function contactOf()
     {
         return $this->hasMany(Contact::class, 'contact_id');
@@ -94,14 +105,21 @@ class User extends Authenticatable
         ];
     }
 
-    public static function getUsersExceptUser(User $user)
+    public static function getUsersExceptUserWithFriends(User $user, array $friendIds)
     {
         $userId = $user->id;
 
         $query = self::select(['users.*', 'messages.message as last_message', 'messages.created_at as last_message_date'])
             ->where('users.id', '!=', $userId)
-            ->when(!$user->is_admin, function($query) {
-                $query->whereNull('users.blocked_at');
+            ->where(function($query) use ($userId, $friendIds) {
+                // Include friends regardless of interaction
+                $query->whereIn('users.id', $friendIds)
+                // Include users with whom the user has exchanged messages
+                ->orWhereHas('sentMessages', function($q) use ($userId) {
+                    $q->where('receiver_id', $userId);
+                })->orWhereHas('receivedMessages', function($q) use ($userId) {
+                    $q->where('sender_id', $userId);
+                });
             })
             ->leftJoin('conversations', function($join) use ($userId) {
                 $join->on('conversations.user_id1', '=', 'users.id')
@@ -118,6 +136,9 @@ class User extends Authenticatable
 
         return $query->get();
     }
+
+
+
 
     public function toConversationArray()
     {

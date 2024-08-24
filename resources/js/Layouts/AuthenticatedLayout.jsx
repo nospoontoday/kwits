@@ -1,5 +1,4 @@
 import NewMessageNotification from '@/Components/App/NewMessageNotification';
-import NewUserModal from '@/Components/App/AddFriendModal';
 import Toast from '@/Components/App/Toast';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
@@ -23,7 +22,7 @@ export default function AuthenticatedLayout({ header, children }) {
     useEffect(() => {
         conversations.forEach((conversation) => {
             let channel = `message.group.${conversation.id}`;
-    
+
             if (conversation.is_user) {
                 channel = `message.user.${[
                     user.id,
@@ -32,7 +31,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     .sort()
                     .join(".")}`;
             }
-    
+
             Echo.private(channel)
                 .error((err) => {
                     console.error(err);
@@ -44,7 +43,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     if (message.sender_id === user.id) {
                         return;
                     }
-    
+
                     emit("newMessageNotification", {
                         user: message.sender,
                         group_id: message.group_id,
@@ -72,12 +71,12 @@ export default function AuthenticatedLayout({ header, children }) {
                     })
             }
         });
-    
+
         // Return the cleanup function after the loop
         return () => {
             conversations.forEach((conversation) => {
                 let channel = `message.group.${conversation.id}`;
-    
+
                 if (conversation.is_user) {
                     channel = `message.user.${[
                         user.id,
@@ -94,7 +93,7 @@ export default function AuthenticatedLayout({ header, children }) {
             });
         };
     }, [conversations]);
-    
+
 
     return (
         <>
