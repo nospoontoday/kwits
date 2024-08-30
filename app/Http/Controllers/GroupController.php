@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\SocketMessage;
 use App\Http\Requests\CreateGroupRequest;
 use App\Models\Group;
 use Illuminate\Http\JsonResponse;
@@ -96,7 +97,7 @@ class GroupController extends Controller
         ]);
     }
 
-    public function getOweMeList($groupId): JsonResponse
+    public function getOweMeList($groupId)
     {
         $group = Group::with(['members', 'expenses.members', 'payments'])
             ->findOrFail($groupId);
@@ -168,19 +169,25 @@ class GroupController extends Controller
         }
 
         // Create chat message
-        Message::create([
+        $message = Message::create([
             'id' => (string) Str::uuid(),
             'group_id' => $groupId,
-            'user_id' => $userId,
+            'sender_id' => $userId,
             'message' => "You owe me list: $oweMeList",
             'type' => 'info',
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Owe Me list retrieved successfully.',
-            'data' => $oweMe,
-        ]);
+        Group::updateGroupWithMessage($groupId, $message);
+
+        SocketMessage::dispatch($message);
+
+        return redirect()->back();
+
+        // return response()->json([
+        //     'success' => true,
+        //     'message' => 'Owe Me list retrieved successfully.',
+        //     'data' => $oweMe,
+        // ]);
     }
 
     public function getOweYouList($groupId): JsonResponse
