@@ -1,4 +1,5 @@
 import ConversationItem from "@/Components/App/ConversationItem";
+import ExpenseModal from "@/Components/App/ExpenseModal";
 import FriendRequestModal from "@/Components/App/FriendRequestModal";
 import GroupModal from "@/Components/App/GroupModal";
 import TextInput from "@/Components/TextInput";
@@ -15,6 +16,7 @@ const ChatLayout = ({ children }) => {
     const [sortedConversations, setSortedConversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState({});
     const [showGroupModal, setShowGroupModal] = useState(false);
+    const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [ showFriendRequestModal, setShowFriendRequestModal ] = useState(false);
     const { on, emit } = useEventBus();
 
@@ -53,7 +55,7 @@ const ChatLayout = ({ children }) => {
         if(!prevMessage) {
             return;
         }
-        
+
         setLocalConversations((oldUsers) => {
             return oldUsers.map((u) => {
                 if(prevMessage.receiver_id && !u.is_group && (u.id == prevMessage.sender_id || u.id == prevMessage.receiver_id)) {
@@ -79,6 +81,9 @@ const ChatLayout = ({ children }) => {
         const offModalShow = on("GroupModal.show", (group) => {
             setShowGroupModal(true);
         });
+        const offExpenseModalShow = on("ExpenseModal.show", (conversation) => {
+            setShowExpenseModal(true);
+        })
         const offGroupDelete = on("group.deleted", ({id, name}) => {
             setLocalConversations((oldConversations) => {
                 return oldConversations.filter((con) => con.id != id);
@@ -98,6 +103,7 @@ const ChatLayout = ({ children }) => {
             offDeleted();
             offModalShow();
             offGroupDelete();
+            offExpenseModalShow();
         }
     }, [on])
 
@@ -171,7 +177,7 @@ const ChatLayout = ({ children }) => {
             >
                     <div className="flex items-center justify-between py-2 px-3 text-xl font-medium text-gray-200">
                         My Conversations
-                        <div 
+                        <div
                             className="tooltip tooltip-left"
                             data-tip="Create new Group"
                         >
@@ -182,7 +188,7 @@ const ChatLayout = ({ children }) => {
                                 <PencilSquareIcon className="w-4 h-4 inline-block l-2" />
                             </button>
                         </div>
-                        <div 
+                        <div
                             className="tooltip tooltip-left"
                             data-tip="Friend requests"
                         >
@@ -204,7 +210,7 @@ const ChatLayout = ({ children }) => {
                     <div className="flex-1 overflow-auto">
                         {sortedConversations &&
                             sortedConversations.map((conversation) => (
-                                <ConversationItem 
+                                <ConversationItem
                                     key={`${
                                         conversation.is_group
                                             ? "group_"
@@ -222,6 +228,7 @@ const ChatLayout = ({ children }) => {
                 </div>
             </div>
             <GroupModal show={showGroupModal} onClose={() => setShowGroupModal(false)} />
+            <ExpenseModal show={showExpenseModal} onClose={() => setShowExpenseModal(false)} />
             <FriendRequestModal show={showFriendRequestModal} onClose={() => setShowFriendRequestModal(false)} />
         </>
     );

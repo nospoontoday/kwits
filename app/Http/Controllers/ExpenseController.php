@@ -1,8 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
+
+use App\Events\SocketMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CreateExpenseRequest;
+use App\Http\Resources\MessageResource;
 use App\Models\Message;
 use App\Models\Expense;
 use App\Models\ExpenseMember;
@@ -10,10 +13,10 @@ use App\Models\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-
+use Illuminate\Http\Request;
 class ExpenseController extends Controller
 {
-    public function store(CreateExpenseRequest $request): JsonResponse
+    public function store(CreateExpenseRequest $request)
     {
         try {
             $group = Group::findOrFail($request->group_id);
@@ -68,19 +71,22 @@ class ExpenseController extends Controller
             }
 
             // Store the expense in the chat log as well
-            Message::create([
+            $message = Message::create([
                 'id' => (string) Str::uuid(),
                 'group_id' => $group->id,
-                'user_id' => Auth::id(),
+                'sender_id' => Auth::id(),
                 'message' => "Expense created: {$request->description}, Amount: {$request->amount}",
                 'type' => 'expense',
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Expense created and split according to the specified type.',
-                'data' => $expense->load('members'),
-            ], 201);
+            if($group) {
+                Group::updateGroupWithMessage($group->id, $message);
+            }
+
+            SocketMessage::dispatch($message);
+
+            return redirect()->back();
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

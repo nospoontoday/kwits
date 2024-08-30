@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HomeController;
@@ -36,6 +37,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
     Route::post('/friend/confirm/{sender}', [FriendController::class, 'confirm'])->name('friend.confirm');
 
     Route::post('/friend/deny/{sender}', [FriendController::class, 'deny'])->name('friend.deny');
+
+    Route::post('/expense', [ExpenseController::class, 'store'])->name('expense.store');
 
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');

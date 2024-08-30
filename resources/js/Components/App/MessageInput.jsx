@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, TrashIcon, ReceiptPercentIcon } from "@heroicons/react/24/solid";
 import NewMessageInput from './NewMessageInput';
 import axios from "axios";
 import EmojiPicker from "emoji-picker-react";
@@ -11,11 +11,13 @@ import AudioRecorder from "./AudioRecorder";
 import { useEventBus } from "@/EventBus";
 
 const MessageInput = ({ conversation = null }) => {
+
     const [newMessage, setNewMessage] = useState("");
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [messageSending, setMessageSending] = useState(false);
     const [chosenFiles, setChosenFiles] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const { emit } = useEventBus();
 
     const onFileChange = (event) => {
         const files = event.target.files;
@@ -127,7 +129,7 @@ const MessageInput = ({ conversation = null }) => {
                 </button>
                 <button className="p-1 text-gray-400 hover:text-gray-300 relative">
                     <PhotoIcon className="w-6" />
-                    <input 
+                    <input
                         type="file"
                         multiple
                         accept="image/*"
@@ -144,15 +146,31 @@ const MessageInput = ({ conversation = null }) => {
                     </Popover.Panel>
                 </Popover>
                 <AudioRecorder fileReady={recordedAudioReady} />
+                <div
+                    className="tooltip tooltip-top"
+                    data-tip="Add an expense"
+                >
+                    <button
+                        onClick={(event) =>
+                            emit(
+                                "ExpenseModal.show",
+                                conversation
+                            )
+                        }
+                        className="p-1 text-gray-400 hover:text-gray-300"
+                    >
+                        <ReceiptPercentIcon className="w-6 h-6" />
+                    </button>
+                </div>
             </div>
             <div className="order-1 px-3 xs:p-0 min-w-[220px] basis-full xs:basis-0 xs:order-2 flex-1 relative">
                 <div className="flex">
-                    <NewMessageInput 
+                    <NewMessageInput
                         value={newMessage}
                         onSend={onSendClick}
                         onChange={(ev) => setNewMessage(ev.target.value)}
                     />
-                    <button 
+                    <button
                         onClick={onSendClick}
                         disabled={messageSending}
                         className="btn btn-info rounded-1-none"
@@ -176,12 +194,12 @@ const MessageInput = ({ conversation = null }) => {
                         <div
                             key={file.file.name}
                             className={
-                                `relative flex justify-between cursor-pointer ` + 
+                                `relative flex justify-between cursor-pointer ` +
                                 (!isImage(file.file) ? " w-[240px]" : "")
                             }
                         >
                             {isImage(file.file) && (
-                                <img 
+                                <img
                                     src={file.url}
                                     alt=""
                                     className="w-16 h-16 object-cover"
@@ -189,7 +207,7 @@ const MessageInput = ({ conversation = null }) => {
                             )}
 
                             {isAudio(file.file) && (
-                                <CustomAudioPlayer 
+                                <CustomAudioPlayer
                                     file={file}
                                     showVolume={false}
                                 />
@@ -200,7 +218,7 @@ const MessageInput = ({ conversation = null }) => {
                             )}
 
                             <button
-                                onClick={() => 
+                                onClick={() =>
                                     setChosenFiles(
                                         chosenFiles.filter(
                                             (f) =>
