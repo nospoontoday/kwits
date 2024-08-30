@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, TrashIcon, ReceiptPercentIcon, WalletIcon } from "@heroicons/react/24/solid"; // Import WalletIcon
+import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, TrashIcon, ReceiptPercentIcon, WalletIcon, CreditCardIcon } from "@heroicons/react/24/solid"; // Import WalletIcon
 import NewMessageInput from './NewMessageInput';
 import axios from "axios";
 import EmojiPicker from "emoji-picker-react";
@@ -119,6 +119,24 @@ const MessageInput = ({ conversation = null }) => {
         const groupId = conversation.id; // or however you access the group ID
 
         axios.get(`/group/${groupId}/owe-me`)
+            .then(response => {
+                // Handle success if needed
+                console.log("Request successful:", response);
+            })
+            .catch(error => {
+                // Handle error if needed
+                console.error("Request failed:", error);
+            });
+    }
+
+    const onIOweYouClick = () => {
+        if (messageSending) {
+            return;
+        }
+
+        const groupId = conversation.id; // or however you access the group ID
+
+        axios.get(`/group/${groupId}/owe-you`)
             .then(response => {
                 // Handle success if needed
                 console.log("Request successful:", response);
@@ -259,6 +277,11 @@ const MessageInput = ({ conversation = null }) => {
                 {conversation.is_group && (
                     <button onClick={onYouOweMeClick} className="p-1 text-gray-400 hover:text-gray-300">
                         <WalletIcon className="w-6 h-6" />
+                    </button>
+                )}
+                {conversation.is_group && (
+                    <button onClick={onIOweYouClick} className="p-1 text-gray-400 hover:text-gray-300">
+                        <CreditCardIcon className="w-6 h-6" />
                     </button>
                 )}
             </div>

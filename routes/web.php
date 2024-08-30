@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
 
     Route::get('/group/{groupId}/owe-me', [GroupController::class, 'getOweMeList']);
 
+    Route::get('/group/{groupId}/owe-you', [GroupController::class, 'getOweYouList']);
+
     Route::post('/friend/request', [FriendController::class, 'store'])->name('friend.request');
 
     Route::get('/friend/requests', [FriendController::class, 'requests'])->name('friend.requests');

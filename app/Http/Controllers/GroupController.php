@@ -190,7 +190,7 @@ class GroupController extends Controller
         // ]);
     }
 
-    public function getOweYouList($groupId): JsonResponse
+    public function getOweYouList($groupId)
     {
         $group = Group::with(['members', 'expenses.members', 'payments'])
             ->findOrFail($groupId);
@@ -259,19 +259,19 @@ class GroupController extends Controller
         }
 
         // Create chat message
-        Message::create([
+        $message = Message::create([
             'id' => (string) Str::uuid(),
             'group_id' => $groupId,
-            'user_id' => $userId,
+            'sender_id' => $userId,
             'message' => "I owe you list: $oweYouList",
             'type' => 'info',
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Owe You list retrieved successfully.',
-            'data' => $oweYou,
-        ]);
+        Group::updateGroupWithMessage($groupId, $message);
+
+        SocketMessage::dispatch($message);
+
+        return redirect()->back();
     }
     
 }
