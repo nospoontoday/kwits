@@ -18,6 +18,8 @@ return new class extends Migration
             $table->uuid('conversation_id')->nullable();
             $table->uuid('receiver_id')->nullable();
             $table->longText('message')->nullable();
+            $table->string('iv');
+            $table->string('key');
             $table->string('type')->default('text'); // Can be 'text', 'expense', 'info', etc.
             $table->timestamps();
 

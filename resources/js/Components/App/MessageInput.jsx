@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, TrashIcon, ReceiptPercentIcon, WalletIcon, CreditCardIcon } from "@heroicons/react/24/solid"; // Import WalletIcon
+import { useEffect, useState } from "react";
+import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, TrashIcon, ReceiptPercentIcon, WalletIcon, CreditCardIcon, UserGroupIcon } from "@heroicons/react/24/solid"; // Import WalletIcon
 import NewMessageInput from './NewMessageInput';
 import axios from "axios";
 import EmojiPicker from "emoji-picker-react";
@@ -9,9 +9,11 @@ import AttachmentPreview from "./AttachmentPreview";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 import AudioRecorder from "./AudioRecorder";
 import { useEventBus } from "@/EventBus";
+import { arrayBufferToBase64 } from "@/CryptoUtils";
+import { usePage } from "@inertiajs/react";
 
 const MessageInput = ({ conversation = null }) => {
-
+    const page = usePage();
     const [newMessage, setNewMessage] = useState("");
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [messageSending, setMessageSending] = useState(false);
@@ -35,63 +37,90 @@ const MessageInput = ({ conversation = null }) => {
         });
     };
 
-    const onSendClick = () => {
-        if (messageSending) {
-            return;
-        }
+    async function onSendClick() {
+        if (messageSending) return;
 
         if (newMessage.trim() === "" && chosenFiles.length === 0) {
             setInputErrorMessage("Message is required");
 
-            setTimeout(() => {
-                setInputErrorMessage("");
-            }, 3000);
-
+            setTimeout(() => setInputErrorMessage(""), 3000);
             return;
         }
 
-        const formData = new FormData();
-        formData.append("message", newMessage);
+        try {
+            const formData = new FormData();
 
-        chosenFiles.forEach((file) => {
-            formData.append("attachments[]", file.file);
-        });
+            if (conversation.is_group) {
+                const users = conversation.users;
+                const encryptedMessages = {};
 
-        if (conversation.is_user) {
-            formData.append("receiver_id", conversation.id);
-        } else if (conversation.is_group) {
-            formData.append("group_id", conversation.id);
-        }
-
-        setMessageSending(true);
-
-        axios.post(route("message.store"), formData, {
-            onUploadProgress: (progressEvent) => {
-                const progress = Math.round(
-                    (progressEvent.loaded / progressEvent.total) * 100
+                const arr = new Uint8Array(12);
+                const iv = window.crypto.getRandomValues(arr);
+                const cryptoKey = await window.crypto.subtle.generateKey(
+                    {
+                        name: 'AES-GCM',
+                        length: 128,
+                    },
+                    true,
+                    ["encrypt", "decrypt"]
                 );
+                const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
+                const encryptionKey = jwkKey.k
+                const messageInBytes = new TextEncoder().encode(newMessage);
+                const encryptedBuffer = await window.crypto.subtle.encrypt(
+                    {
+                        name: "AES-GCM",
+                        iv,
+                    },
+                    cryptoKey,
+                    messageInBytes
+                )
 
-                setUploadProgress(progress);
-            },
-        })
-            .then(() => {
-                setNewMessage("");
-                setMessageSending(false);
-                setTimeout(() => {
-                    setUploadProgress(0);
-                }, 500);
-                setChosenFiles([]);
-            })
-            .catch((err) => {
-                setMessageSending(false);
-                setUploadProgress(0);
-                setChosenFiles([]);
-                const message = err?.response?.data?.message;
-                setInputErrorMessage(
-                    message || "An error occurred while sending message"
-                );
+                const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
+
+                formData.append("message", encryptedBase64);
+                formData.append("iv", iv);
+                formData.append("key", encryptionKey);
+            } else if (conversation.is_user) {
+                // Encrypt the message for a single recipient
+                // const encrypted = await encryptWithPublicKey(publicKey, newMessage);
+                // const formData = new FormData();
+                // formData.append("message", encrypted);
+                // formData.append("receiver_id", conversation.id);
+            }
+        
+            chosenFiles.forEach((file) => {
+                formData.append("attachments[]", file.file);
             });
-    };
+        
+            if (conversation.is_group) {
+                formData.append("group_id", conversation.id);
+            }
+        
+            setMessageSending(true);
+        
+            await axios.post(route("message.store"), formData, {
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round(
+                        (progressEvent.loaded / progressEvent.total) * 100
+                    );
+                    setUploadProgress(progress);
+                },
+            });
+        
+            setNewMessage("");
+            setMessageSending(false);
+            setUploadProgress(0);
+            setChosenFiles([]);
+        } catch (err) {
+            setMessageSending(false);
+            setUploadProgress(0);
+            setChosenFiles([]);
+            const message = err?.response?.data?.message;
+            setInputErrorMessage(message || "An error occurred while sending the message");
+            console.error(err);
+        }            
+    }
 
     const onLikeClick = () => {
         if (messageSending) {

@@ -48,29 +48,29 @@ class DatabaseSeeder extends Seeder
         }
 
         // Create 1000 messages
-        Message::factory(1000)->create();
+        // Message::factory(1000)->create();
 
-        // Retrieve messages without a group and order them by creation date
-        $messages = Message::whereNull('group_id')->orderBy('created_at')->get();
+        // // Retrieve messages without a group and order them by creation date
+        // $messages = Message::whereNull('group_id')->orderBy('created_at')->get();
 
-        // Group messages by sender and receiver pair
-        $conversations = $messages->groupBy(function ($message) {
-            return collect([$message->sender_id, $message->receiver_id])->sort()->implode('_');
-        });
+        // // Group messages by sender and receiver pair
+        // $conversations = $messages->groupBy(function ($message) {
+        //     return collect([$message->sender_id, $message->receiver_id])->sort()->implode('_');
+        // });
 
-        // Prepare conversations for insertion
-        $conversationData = $conversations->map(function ($groupedMessages) {
-            return [
-                'id' => (string) \Illuminate\Support\Str::uuid(), // Ensure UUID is generated
-                'user_id1' => $groupedMessages->first()->sender_id,
-                'user_id2' => $groupedMessages->first()->receiver_id,
-                'last_message_id' => $groupedMessages->last()->id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ];
-        })->values();
+        // // Prepare conversations for insertion
+        // $conversationData = $conversations->map(function ($groupedMessages) {
+        //     return [
+        //         'id' => (string) \Illuminate\Support\Str::uuid(), // Ensure UUID is generated
+        //         'user_id1' => $groupedMessages->first()->sender_id,
+        //         'user_id2' => $groupedMessages->first()->receiver_id,
+        //         'last_message_id' => $groupedMessages->last()->id,
+        //         'created_at' => Carbon::now(),
+        //         'updated_at' => Carbon::now(),
+        //     ];
+        // })->values();
 
-        // Insert or ignore conversations
-        Conversation::insertOrIgnore($conversationData->toArray());
+        // // Insert or ignore conversations
+        // Conversation::insertOrIgnore($conversationData->toArray());
     }
 }

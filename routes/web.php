@@ -4,6 +4,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\KeyController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
@@ -43,6 +44,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
     Route::post('/friend/deny/{sender}', [FriendController::class, 'deny'])->name('friend.deny');
 
     Route::post('/expense', [ExpenseController::class, 'store'])->name('expense.store');
+
+    Route::post('/key', [KeyController::class, 'store'])->name('key.store');
 
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');

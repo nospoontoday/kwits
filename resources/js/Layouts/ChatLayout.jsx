@@ -60,13 +60,13 @@ const ChatLayout = ({ children }) => {
             return oldUsers.map((u) => {
                 if(prevMessage.receiver_id && !u.is_group && (u.id == prevMessage.sender_id || u.id == prevMessage.receiver_id)) {
                     u.last_message = prevMessage.message;
-                    u.last_mesage_date = prevMessage.created_at;
+                    u.last_message_date = prevMessage.created_at;
                     return u;
                 }
 
                 if(prevMessage.group_id && u.is_group && u.id == prevMessage.group_id) {
                     u.last_message = prevMessage.message;
-                    u.last_mesage_date = prevMessage.created_at;
+                    u.last_message_date = prevMessage.created_at;
                     return u;
                 }
 

@@ -114,9 +114,7 @@ class MessageController extends Controller
         $receiverId = $data['receiver_id'] ?? null;
         $groupId = $data['group_id'] ?? null;
         $files = $data['attachments'] ?? [];
-
         $message = Message::create($data);
-
         $attachments = [];
 
         if($files) {
