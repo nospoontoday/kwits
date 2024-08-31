@@ -50,44 +50,33 @@ const MessageInput = ({ conversation = null }) => {
         try {
             const formData = new FormData();
 
-            if (conversation.is_group) {
-                const users = conversation.users;
-                const encryptedMessages = {};
+            const arr = new Uint8Array(12);
+            const iv = window.crypto.getRandomValues(arr);
+            const cryptoKey = await window.crypto.subtle.generateKey(
+                {
+                    name: 'AES-GCM',
+                    length: 128,
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+            const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
+            const encryptionKey = jwkKey.k
+            const messageInBytes = new TextEncoder().encode(newMessage);
+            const encryptedBuffer = await window.crypto.subtle.encrypt(
+                {
+                    name: "AES-GCM",
+                    iv,
+                },
+                cryptoKey,
+                messageInBytes
+            )
 
-                const arr = new Uint8Array(12);
-                const iv = window.crypto.getRandomValues(arr);
-                const cryptoKey = await window.crypto.subtle.generateKey(
-                    {
-                        name: 'AES-GCM',
-                        length: 128,
-                    },
-                    true,
-                    ["encrypt", "decrypt"]
-                );
-                const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
-                const encryptionKey = jwkKey.k
-                const messageInBytes = new TextEncoder().encode(newMessage);
-                const encryptedBuffer = await window.crypto.subtle.encrypt(
-                    {
-                        name: "AES-GCM",
-                        iv,
-                    },
-                    cryptoKey,
-                    messageInBytes
-                )
+            const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
 
-                const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
-
-                formData.append("message", encryptedBase64);
-                formData.append("iv", iv);
-                formData.append("key", encryptionKey);
-            } else if (conversation.is_user) {
-                // Encrypt the message for a single recipient
-                // const encrypted = await encryptWithPublicKey(publicKey, newMessage);
-                // const formData = new FormData();
-                // formData.append("message", encrypted);
-                // formData.append("receiver_id", conversation.id);
-            }
+            formData.append("message", encryptedBase64);
+            formData.append("iv", iv);
+            formData.append("key", encryptionKey);
         
             chosenFiles.forEach((file) => {
                 formData.append("attachments[]", file.file);
@@ -95,6 +84,10 @@ const MessageInput = ({ conversation = null }) => {
         
             if (conversation.is_group) {
                 formData.append("group_id", conversation.id);
+            }
+            
+            if (conversation.is_user) {
+                formData.append("receiver_id", conversation.id);
             }
         
             setMessageSending(true);
