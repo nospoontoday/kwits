@@ -111,25 +111,74 @@ const MessageInput = ({ conversation = null }) => {
             const message = err?.response?.data?.message;
             setInputErrorMessage(message || "An error occurred while sending the message");
             console.error(err);
-        }            
+        }
     }
 
-    const onLikeClick = () => {
+    async function onLikeClick() {
         if (messageSending) {
             return;
         }
 
-        const data = {
-            message: "👍",
-        };
+        try {
+            const formData = new FormData();
 
-        if (conversation.is_user) {
-            data["receiver_id"] = conversation.id;
-        } else if (conversation.is_group) {
-            data["group_id"] = conversation.id;
+            const arr = new Uint8Array(12);
+            const iv = window.crypto.getRandomValues(arr);
+            const cryptoKey = await window.crypto.subtle.generateKey(
+                {
+                    name: 'AES-GCM',
+                    length: 128,
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+            const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
+            const encryptionKey = jwkKey.k
+            const messageInBytes = new TextEncoder().encode("👍");
+            const encryptedBuffer = await window.crypto.subtle.encrypt(
+                {
+                    name: "AES-GCM",
+                    iv,
+                },
+                cryptoKey,
+                messageInBytes
+            )
+
+            const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
+
+            formData.append("message", encryptedBase64);
+            formData.append("iv", iv);
+            formData.append("key", encryptionKey);
+        
+            if (conversation.is_group) {
+                formData.append("group_id", conversation.id);
+            }
+
+            if (conversation.is_user) {
+                formData.append("receiver_id", conversation.id);
+            }
+        
+            setMessageSending(true);
+        
+            await axios.post(route("message.store"), formData, {
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round(
+                        (progressEvent.loaded / progressEvent.total) * 100
+                    );
+                    setUploadProgress(progress);
+                },
+            });
+        
+            setNewMessage("");
+            setMessageSending(false);
+            setUploadProgress(0);
+        } catch (err) {
+            setMessageSending(false);
+            setUploadProgress(0);
+            const message = err?.response?.data?.message;
+            setInputErrorMessage(message || "An error occurred while sending the message");
+            console.error(err);
         }
-
-        axios.post(route("message.store"), data);
     };
 
     async function onYouOweMeClick() {
