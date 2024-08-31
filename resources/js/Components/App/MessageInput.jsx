@@ -13,7 +13,6 @@ import { arrayBufferToBase64 } from "@/CryptoUtils";
 import { usePage } from "@inertiajs/react";
 
 const MessageInput = ({ conversation = null }) => {
-    const page = usePage();
     const [newMessage, setNewMessage] = useState("");
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [messageSending, setMessageSending] = useState(false);
@@ -85,7 +84,7 @@ const MessageInput = ({ conversation = null }) => {
             if (conversation.is_group) {
                 formData.append("group_id", conversation.id);
             }
-            
+
             if (conversation.is_user) {
                 formData.append("receiver_id", conversation.id);
             }
@@ -133,40 +132,154 @@ const MessageInput = ({ conversation = null }) => {
         axios.post(route("message.store"), data);
     };
 
-    const onYouOweMeClick = () => {
+    async function onYouOweMeClick() {
         if (messageSending) {
             return;
         }
 
         const groupId = conversation.id; // or however you access the group ID
 
-        axios.get(`/group/${groupId}/owe-me`)
-            .then(response => {
-                // Handle success if needed
-                console.log("Request successful:", response);
-            })
-            .catch(error => {
-                // Handle error if needed
-                console.error("Request failed:", error);
+        try {
+            const formData = new FormData();
+            formData.append("group_id", groupId);
+
+            setMessageSending(true);
+
+            // Send the first request to get the owe-me list
+            const { data } = await axios.post(route("group.owe-me"), formData, {
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round(
+                        (progressEvent.loaded / progressEvent.total) * 100
+                    );
+                    setUploadProgress(progress);
+                },
             });
+
+            // Encrypt the returned message
+            const arr = new Uint8Array(12);
+            const iv = window.crypto.getRandomValues(arr);
+            const cryptoKey = await window.crypto.subtle.generateKey(
+                {
+                    name: 'AES-GCM',
+                    length: 128,
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+            const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
+            const encryptionKey = jwkKey.k
+            const messageInBytes = new TextEncoder().encode(data.message);
+            const encryptedBuffer = await window.crypto.subtle.encrypt(
+                {
+                    name: "AES-GCM",
+                    iv,
+                },
+                cryptoKey,
+                messageInBytes
+            );
+
+            const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
+
+            // Prepare the form data for the second request
+            const messageFormData = new FormData();
+            messageFormData.append("message", encryptedBase64);
+            messageFormData.append("iv", iv);
+            messageFormData.append("key", encryptionKey);
+            messageFormData.append("group_id", groupId);
+
+            // Send the encrypted message to be stored
+            await axios.post(route("message.store"), messageFormData, {
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round(
+                        (progressEvent.loaded / progressEvent.total) * 100
+                    );
+                    setUploadProgress(progress);
+                },
+            });
+
+            setMessageSending(false);
+            setUploadProgress(0);
+
+        } catch (error) {
+            const message = error?.response?.data?.message;
+            setInputErrorMessage(message || "An error occurred while sending the message");
+            console.error(error);
+        }
     }
 
-    const onIOweYouClick = () => {
+    async function onIOweYouClick() {
         if (messageSending) {
             return;
         }
 
         const groupId = conversation.id; // or however you access the group ID
 
-        axios.get(`/group/${groupId}/owe-you`)
-            .then(response => {
-                // Handle success if needed
-                console.log("Request successful:", response);
-            })
-            .catch(error => {
-                // Handle error if needed
-                console.error("Request failed:", error);
+        try {
+            const formData = new FormData();
+            formData.append("group_id", groupId);
+
+            setMessageSending(true);
+
+            // Send the first request to get the owe-me list
+            const { data } = await axios.post(route("group.owe-you"), formData, {
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round(
+                        (progressEvent.loaded / progressEvent.total) * 100
+                    );
+                    setUploadProgress(progress);
+                },
             });
+
+            // Encrypt the returned message
+            const arr = new Uint8Array(12);
+            const iv = window.crypto.getRandomValues(arr);
+            const cryptoKey = await window.crypto.subtle.generateKey(
+                {
+                    name: 'AES-GCM',
+                    length: 128,
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+            const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
+            const encryptionKey = jwkKey.k
+            const messageInBytes = new TextEncoder().encode(data.message);
+            const encryptedBuffer = await window.crypto.subtle.encrypt(
+                {
+                    name: "AES-GCM",
+                    iv,
+                },
+                cryptoKey,
+                messageInBytes
+            );
+
+            const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
+
+            // Prepare the form data for the second request
+            const messageFormData = new FormData();
+            messageFormData.append("message", encryptedBase64);
+            messageFormData.append("iv", iv);
+            messageFormData.append("key", encryptionKey);
+            messageFormData.append("group_id", groupId);
+
+            // Send the encrypted message to be stored
+            await axios.post(route("message.store"), messageFormData, {
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round(
+                        (progressEvent.loaded / progressEvent.total) * 100
+                    );
+                    setUploadProgress(progress);
+                },
+            });
+
+            setMessageSending(false);
+            setUploadProgress(0);
+
+        } catch (error) {
+            const message = error?.response?.data?.message;
+            setInputErrorMessage(message || "An error occurred while sending the message");
+            console.error(error);
+        }
     }
 
     const recordedAudioReady = (file, url) => {

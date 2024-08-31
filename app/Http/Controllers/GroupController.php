@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\AddGroupMemberRequest;
 use App\Http\Requests\StoreGroupRequest;
+use App\Http\Requests\StoreOweMeRequest;
+use App\Http\Requests\StoreOweYouRequest;
 use App\Http\Requests\UpdateGroupRequest;
 use App\Jobs\DeleteGroupJob;
 use App\Models\Message;
@@ -97,8 +99,11 @@ class GroupController extends Controller
         ]);
     }
 
-    public function getOweMeList($groupId)
+    public function getOweMeList(StoreOweMeRequest $request)
     {
+        $data = $request->validated();
+        $groupId = $data['group_id'];
+
         $group = Group::with(['members', 'expenses.members', 'payments'])
             ->findOrFail($groupId);
 
@@ -168,30 +173,18 @@ class GroupController extends Controller
             $oweMeList = "No one owes you anything.";
         }
 
-        // Create chat message
-        $message = Message::create([
-            'id' => (string) Str::uuid(),
-            'group_id' => $groupId,
-            'sender_id' => $userId,
+        return response()->json([
+            'success' => true,
             'message' => "You owe me list: $oweMeList",
-            'type' => 'info',
+            'data' => $oweMe,
         ]);
-
-        Group::updateGroupWithMessage($groupId, $message);
-
-        SocketMessage::dispatch($message);
-
-        return redirect()->back();
-
-        // return response()->json([
-        //     'success' => true,
-        //     'message' => 'Owe Me list retrieved successfully.',
-        //     'data' => $oweMe,
-        // ]);
     }
 
-    public function getOweYouList($groupId)
+    public function getOweYouList(StoreOweYouRequest $request)
     {
+        $data = $request->validated();
+        $groupId = $data['group_id'];
+
         $group = Group::with(['members', 'expenses.members', 'payments'])
             ->findOrFail($groupId);
     
@@ -258,20 +251,11 @@ class GroupController extends Controller
             $oweYouList = "You don't owe anyone anything.";
         }
 
-        // Create chat message
-        $message = Message::create([
-            'id' => (string) Str::uuid(),
-            'group_id' => $groupId,
-            'sender_id' => $userId,
-            'message' => "I owe you list: $oweYouList",
-            'type' => 'info',
+        return response()->json([
+            'success' => true,
+            'message' => "You owe me list: $oweYouList",
+            'data' => $oweYou,
         ]);
-
-        Group::updateGroupWithMessage($groupId, $message);
-
-        SocketMessage::dispatch($message);
-
-        return redirect()->back();
     }
     
 }

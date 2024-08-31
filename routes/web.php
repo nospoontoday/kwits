@@ -31,9 +31,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
 
     Route::delete('/group/{group}', [GroupController::class, 'destroy'])->name('group.destroy');
 
-    Route::get('/group/{groupId}/owe-me', [GroupController::class, 'getOweMeList']);
+    Route::post('/group/owe-me', [GroupController::class, 'getOweMeList'])->name('group.owe-me');
 
-    Route::get('/group/{groupId}/owe-you', [GroupController::class, 'getOweYouList']);
+    Route::post('/group/owe-you', [GroupController::class, 'getOweYouList'])->name('group.owe-you');
 
     Route::post('/friend/request', [FriendController::class, 'store'])->name('friend.request');
 
