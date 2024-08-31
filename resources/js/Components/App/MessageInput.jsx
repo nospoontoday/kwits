@@ -169,7 +169,6 @@ const MessageInput = ({ conversation = null }) => {
                 },
             });
         
-            setNewMessage("");
             setMessageSending(false);
             setUploadProgress(0);
         } catch (err) {

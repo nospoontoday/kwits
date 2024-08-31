@@ -22,7 +22,8 @@ class StoreMessageRequest extends FormRequest
             'iv' => 'required|string',
             'key' => 'required|string',
             'attachments' => 'nullable|array|max:10',
-            'attachments.*' => 'file|max:1024000'
+            'attachments.*' => 'file|max:1024000',
+            'type' => 'nullable',
         ];
     }
 

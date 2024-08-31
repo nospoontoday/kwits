@@ -71,21 +71,25 @@ class ExpenseController extends Controller
             }
 
             // Store the expense in the chat log as well
-            $message = Message::create([
-                'id' => (string) Str::uuid(),
-                'group_id' => $group->id,
-                'sender_id' => Auth::id(),
+            // $message = Message::create([
+            //     'id' => (string) Str::uuid(),
+            //     'group_id' => $group->id,
+            //     'sender_id' => Auth::id(),
+            //     'message' => "Expense created: {$request->description}, Amount: {$request->amount}",
+            //     'type' => 'expense',
+            // ]);
+
+            // if($group) {
+            //     Group::updateGroupWithMessage($group->id, $message);
+            // }
+
+            // SocketMessage::dispatch($message);
+
+            return response()->json([
+                'success' => true,
                 'message' => "Expense created: {$request->description}, Amount: {$request->amount}",
-                'type' => 'expense',
+                'description' => $request->description,
             ]);
-
-            if($group) {
-                Group::updateGroupWithMessage($group->id, $message);
-            }
-
-            SocketMessage::dispatch($message);
-
-            return redirect()->back();
 
         } catch (\Exception $e) {
             return response()->json([
