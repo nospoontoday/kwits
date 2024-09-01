@@ -63,9 +63,24 @@ const ChatLayout = ({ children }) => {
     };
 
     const messageDeleted = async ({ prevMessage }) => {
+        console.log(prevMessage);
         if (prevMessage) {
             // Update conversations with the deleted message
             const updatedConversations = await updateLastMessage(localConversations, prevMessage);
+            setLocalConversations(updatedConversations);
+        } else {
+            // Handle the case where all messages are deleted in the conversation
+            const updatedConversations = localConversations.map((conversation) => {
+                if (conversation.id === selectedConversation?.id) {
+                    return {
+                        ...conversation,
+                        last_message: null, // Set last_message to null
+                        last_message_date: null, // Set last_message_date to null
+                    };
+                }
+                return conversation;
+            });
+    
             setLocalConversations(updatedConversations);
         }
     };

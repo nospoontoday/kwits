@@ -253,7 +253,7 @@ class GroupController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "You owe me list: $oweYouList",
+            'message' => "I owe you list: $oweYouList",
             'data' => $oweYou,
         ]);
     }
