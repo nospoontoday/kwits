@@ -151,6 +151,33 @@ const MessageInput = ({ conversation = null }) => {
 
         try {
             const formData = new FormData();
+            const encryptedMessages = {};
+            const newMessage = "👍";
+
+            if (conversation.is_group) {
+                const users = conversation.users;
+
+                // Encrypt the message for each user in the group
+                await Promise.all(users.map(async (user) => {
+                    if (user.public_key) {
+                        const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
+                        encryptedMessages[user.id] = encrypted;
+                    }
+                }));
+
+                // Assuming your backend can handle an array of encrypted messages for each recipient
+                formData.append("message", JSON.stringify(encryptedMessages));
+            } else if (conversation.is_user) {
+                // Encrypt the message for a single recipient
+                const encryptedReceiver = await encryptWithPublicKey(conversation.public_key, newMessage);
+                encryptedMessages[conversation.id] = encryptedReceiver;
+
+                const encryptedSender = await encryptWithPublicKey(currentUser.public_key, newMessage);
+                encryptedMessages[currentUser.id] = encryptedSender;
+
+                formData.append("message", JSON.stringify(encryptedMessages));
+                formData.append("receiver_id", conversation.id);
+            }
 
             const arr = new Uint8Array(12);
             const iv = window.crypto.getRandomValues(arr);
@@ -162,23 +189,6 @@ const MessageInput = ({ conversation = null }) => {
                 true,
                 ["encrypt", "decrypt"]
             );
-            const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
-            const encryptionKey = jwkKey.k
-            const messageInBytes = new TextEncoder().encode("👍");
-            const encryptedBuffer = await window.crypto.subtle.encrypt(
-                {
-                    name: "AES-GCM",
-                    iv,
-                },
-                cryptoKey,
-                messageInBytes
-            )
-
-            const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
-
-            formData.append("message", encryptedBase64);
-            formData.append("iv", iv);
-            formData.append("key", encryptionKey);
         
             if (conversation.is_group) {
                 formData.append("group_id", conversation.id);
