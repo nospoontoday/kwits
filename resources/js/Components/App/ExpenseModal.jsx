@@ -9,7 +9,7 @@ import InputLabel from "@/Components/InputLabel";
 import TextInput from "@/Components/TextInput";
 import InputError from "@/Components/InputError";
 import UserPicker from "@/Components/UserPicker";
-import { arrayBufferToBase64 } from "@/CryptoUtils";
+import { encryptWithPublicKey } from "@/CryptoUtils"; // Assuming you have this function to encrypt messages
 
 export default function ExpenseModal({ show = false, onClose = () => {} }) {
     const page = usePage();
@@ -38,45 +38,32 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                 await axios.put(route("expense.update", expense.id), formData);
                 emit("toast.show", `Expense "${formData.description}" was updated`);
             } else {
+                const newFormData = new FormData();
+                newFormData.append("group_id", group.id);
+                newFormData.append("description", formData.description);
+                newFormData.append("amount", formData.amount);
+                newFormData.append("expense_date", formData.expense_date);
+                newFormData.append("split_type", formData.split_type);
+                newFormData.append("user_ids", JSON.stringify(formData.user_ids));
+                
+                // Send the first request to create the expense and get the owe-me list
+                const { data } = await axios.post(route("expense.store"), newFormData);
+                const newMessage = data.message;
 
-                // Send the first request to get the owe-me list
-                const { data } = await axios.post(route("expense.store"), formData);
+                const encryptedMessages = {};
 
-                // Encrypt the returned message
-                const arr = new Uint8Array(12);
-                const iv = window.crypto.getRandomValues(arr);
-                const cryptoKey = await window.crypto.subtle.generateKey(
-                    {
-                        name: 'AES-GCM',
-                        length: 128,
-                    },
-                    true,
-                    ["encrypt", "decrypt"]
-                );
-                const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
-                const encryptionKey = jwkKey.k
-                const messageInBytes = new TextEncoder().encode(data.message);
-                const encryptedBuffer = await window.crypto.subtle.encrypt(
-                    {
-                        name: "AES-GCM",
-                        iv,
-                    },
-                    cryptoKey,
-                    messageInBytes
-                );
+                // Encrypt the message for each user in the group
+                await Promise.all(group.users.map(async (user) => {
+                    if (user.public_key) {
+                        const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
+                        encryptedMessages[user.id] = encrypted;
+                    }
+                }));
 
-                const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
-
-                // Prepare the form data for the second request
-                const messageFormData = new FormData();
-                messageFormData.append("message", encryptedBase64);
-                messageFormData.append("iv", iv);
-                messageFormData.append("key", encryptionKey);
-                messageFormData.append("group_id", formData.group_id);
-                messageFormData.append("type", "expense");
+                newFormData.append("message", JSON.stringify(encryptedMessages));
 
                 // Send the encrypted message to be stored
-                await axios.post(route("message.store"), messageFormData);
+                await axios.post(route("message.store"), newFormData);
 
                 emit("toast.show", `Expense "${data.description}" was created`);
             }

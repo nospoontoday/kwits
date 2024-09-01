@@ -229,6 +229,8 @@ const MessageInput = ({ conversation = null }) => {
 
         try {
             const formData = new FormData();
+            const encryptedMessages = {};
+            const users = conversation.users;
             formData.append("group_id", groupId);
 
             setMessageSending(true);
@@ -242,41 +244,20 @@ const MessageInput = ({ conversation = null }) => {
                     setUploadProgress(progress);
                 },
             });
+            const newMessage = data.message;
 
-            // Encrypt the returned message
-            const arr = new Uint8Array(12);
-            const iv = window.crypto.getRandomValues(arr);
-            const cryptoKey = await window.crypto.subtle.generateKey(
-                {
-                    name: 'AES-GCM',
-                    length: 128,
-                },
-                true,
-                ["encrypt", "decrypt"]
-            );
-            const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
-            const encryptionKey = jwkKey.k
-            const messageInBytes = new TextEncoder().encode(data.message);
-            const encryptedBuffer = await window.crypto.subtle.encrypt(
-                {
-                    name: "AES-GCM",
-                    iv,
-                },
-                cryptoKey,
-                messageInBytes
-            );
+            // Encrypt the message for each user in the group
+            await Promise.all(users.map(async (user) => {
+                if (user.public_key) {
+                    const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
+                    encryptedMessages[user.id] = encrypted;
+                }
+            }));
 
-            const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
-
-            // Prepare the form data for the second request
-            const messageFormData = new FormData();
-            messageFormData.append("message", encryptedBase64);
-            messageFormData.append("iv", iv);
-            messageFormData.append("key", encryptionKey);
-            messageFormData.append("group_id", groupId);
+            formData.append("message", JSON.stringify(encryptedMessages));
 
             // Send the encrypted message to be stored
-            await axios.post(route("message.store"), messageFormData, {
+            await axios.post(route("message.store"), formData, {
                 onUploadProgress: (progressEvent) => {
                     const progress = Math.round(
                         (progressEvent.loaded / progressEvent.total) * 100
@@ -304,6 +285,8 @@ const MessageInput = ({ conversation = null }) => {
 
         try {
             const formData = new FormData();
+            const encryptedMessages = {};
+            const users = conversation.users;
             formData.append("group_id", groupId);
 
             setMessageSending(true);
@@ -317,41 +300,20 @@ const MessageInput = ({ conversation = null }) => {
                     setUploadProgress(progress);
                 },
             });
+            const newMessage = data.message;
 
-            // Encrypt the returned message
-            const arr = new Uint8Array(12);
-            const iv = window.crypto.getRandomValues(arr);
-            const cryptoKey = await window.crypto.subtle.generateKey(
-                {
-                    name: 'AES-GCM',
-                    length: 128,
-                },
-                true,
-                ["encrypt", "decrypt"]
-            );
-            const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
-            const encryptionKey = jwkKey.k
-            const messageInBytes = new TextEncoder().encode(data.message);
-            const encryptedBuffer = await window.crypto.subtle.encrypt(
-                {
-                    name: "AES-GCM",
-                    iv,
-                },
-                cryptoKey,
-                messageInBytes
-            );
+            // Encrypt the message for each user in the group
+            await Promise.all(users.map(async (user) => {
+                if (user.public_key) {
+                    const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
+                    encryptedMessages[user.id] = encrypted;
+                }
+            }));
 
-            const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
-
-            // Prepare the form data for the second request
-            const messageFormData = new FormData();
-            messageFormData.append("message", encryptedBase64);
-            messageFormData.append("iv", iv);
-            messageFormData.append("key", encryptionKey);
-            messageFormData.append("group_id", groupId);
+            formData.append("message", JSON.stringify(encryptedMessages));
 
             // Send the encrypted message to be stored
-            await axios.post(route("message.store"), messageFormData, {
+            await axios.post(route("message.store"), formData, {
                 onUploadProgress: (progressEvent) => {
                     const progress = Math.round(
                         (progressEvent.loaded / progressEvent.total) * 100
