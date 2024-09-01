@@ -3,11 +3,12 @@ import ExpenseModal from "@/Components/App/ExpenseModal";
 import FriendRequestModal from "@/Components/App/FriendRequestModal";
 import GroupModal from "@/Components/App/GroupModal";
 import TextInput from "@/Components/TextInput";
-import { decryptWithPrivateKey } from "@/CryptoUtils"; // Import decryptWithPrivateKey
+import { createKeyPair, decryptWithPrivateKey } from "@/CryptoUtils"; // Import decryptWithPrivateKey
 import { useEventBus } from "@/EventBus";
 import { PencilSquareIcon, UsersIcon } from "@heroicons/react/24/solid";
 import { router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
+import axios from "axios"; // Make sure axios is imported
 
 const ChatLayout = ({ children }) => {
     const page = usePage();
@@ -16,6 +17,7 @@ const ChatLayout = ({ children }) => {
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState({});
+    const [publicKey, setPublicKey] = useState(null); // State to store the public key
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
@@ -173,6 +175,30 @@ const ChatLayout = ({ children }) => {
                 console.error("error", error);
             });
     }, []);
+
+    useEffect(() => {
+        const fetchAndSetPublicKey = async () => {
+            if (!currentUser.public_key) {
+                // Generate key pair and set the public key
+                const pubKey = await createKeyPair();
+                setPublicKey(pubKey);
+
+                // Send publicKey to the server
+                const formData = new FormData();
+                formData.append("public_key", pubKey);
+
+                await axios.post(route("key.store"), formData);
+            } else {
+                // Use the stored public key
+                const decodedPublicKey = new Uint8Array(
+                    atob(currentUser.public_key).split("").map(c => c.charCodeAt(0))
+                );
+                setPublicKey(decodedPublicKey);
+            }
+        };
+
+        fetchAndSetPublicKey();
+    }, [currentUser.public_key]);
 
     return (
         <>
