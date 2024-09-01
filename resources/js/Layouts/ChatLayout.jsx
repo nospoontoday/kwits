@@ -118,26 +118,39 @@ const ChatLayout = ({ children }) => {
 
     useEffect(() => {
         const decryptConversations = async () => {
-            const decryptedConversations = await Promise.all(
-                conversations.map(async (conversation) => {
-                    if (!conversation.last_message) {
-                        return conversation;
-                    }
-                    const decryptedLastMessage = await decryptWithPrivateKey(
-                        JSON.parse(conversation.last_message), // Assuming conversation.last_message is a JSON string with encrypted data
-                        currentUser.id
-                    );
-                    return {
-                        ...conversation,
-                        last_message: decryptedLastMessage,
-                    };
-                })
-            );
-            setLocalConversations(decryptedConversations);
+            try {
+                const decryptedConversations = await Promise.all(
+                    conversations.map(async (conversation) => {
+                        if (!conversation.last_message) {
+                            return conversation;
+                        }
+                        try {
+                            const decryptedLastMessage = await decryptWithPrivateKey(
+                                JSON.parse(conversation.last_message),
+                                currentUser.id
+                            );
+    
+                            return {
+                                ...conversation,
+                                last_message: decryptedLastMessage,
+                            };
+                        } catch (error) {
+                            console.error("Failed to decrypt message:", error);
+                            return conversation;
+                        }
+                    })
+                );
+                console.log(decryptedConversations); // Debugging
+                setLocalConversations(decryptedConversations);
+            } catch (error) {
+                console.error("Failed to decrypt conversations:", error);
+                debugger;
+            }
         };
-
+    
         decryptConversations();
     }, [conversations, currentUser.id]);
+    
 
     useEffect(() => {
         setSortedConversations(

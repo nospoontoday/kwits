@@ -130,16 +130,16 @@ const requestPrivateKey = async (userId) => {
 };
 
 export async function decryptWithPrivateKey(encryptedMessages, userId) {
-    // Retrieve the private key from secure storage
-    const storedPrivateKey = secureStorage.getItem("privateKey");
-
-    if (!storedPrivateKey) {
+    if (!secureStorage.getItem("privateKey")) {
         await requestPrivateKey(userId);
 
+        // Verify if the private key is stored after requesting
         if(!secureStorage.getItem("privateKey")) {
             throw new Error("Private key not found");
-        }   
+        }
     }
+    
+    const storedPrivateKey = secureStorage.getItem("privateKey");
 
     // Decode the Base64 encoded private key
     const privateKeyBinary = Uint8Array.from(atob(storedPrivateKey), c => c.charCodeAt(0)).buffer;
@@ -152,7 +152,7 @@ export async function decryptWithPrivateKey(encryptedMessages, userId) {
         false,
         ["decrypt"]
     );
-
+    
     // Check if we have the encrypted message for the user
     const encryptedMessage = encryptedMessages[userId];
 
@@ -172,6 +172,7 @@ export async function decryptWithPrivateKey(encryptedMessages, userId) {
 
     // Convert decrypted ArrayBuffer to string
     const decoder = new TextDecoder();
+
     return decoder.decode(decryptedBuffer);
 }
 
