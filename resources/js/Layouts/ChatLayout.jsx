@@ -3,6 +3,7 @@ import ExpenseModal from "@/Components/App/ExpenseModal";
 import FriendRequestModal from "@/Components/App/FriendRequestModal";
 import GroupModal from "@/Components/App/GroupModal";
 import TextInput from "@/Components/TextInput";
+import { decryptMessage } from "@/CryptoUtils";
 import { useEventBus } from "@/EventBus";
 import { PencilSquareIcon, UsersIcon } from "@heroicons/react/24/solid";
 import { router, usePage } from "@inertiajs/react";
@@ -134,7 +135,27 @@ const ChatLayout = ({ children }) => {
     }, [localConversations]);
 
     useEffect(() => {
-        setLocalConversations(conversations);
+        const decryptConversations = async () => {
+            const decryptedConversations = await Promise.all(
+                conversations.map(async (conversation) => {
+
+                    let decryptedLastMessage = "";
+
+                    if(conversation.last_message) {
+                        decryptedLastMessage = await decryptMessage(conversation.last_message, conversation.iv, conversation.key);
+                    }
+
+                    return {
+                        ...conversation,
+                        name: conversation.name,
+                        last_message: decryptedLastMessage
+                    };
+                })
+            );
+            setLocalConversations(decryptedConversations);
+        };
+    
+        decryptConversations();
     }, [conversations]);
 
     useEffect(() => {

@@ -24,3 +24,50 @@ export async function arrayBufferToBase64(buffer) {
     // Convert binary string to Base64
     return btoa(binaryString);
 }
+
+export async function decryptMessage(message, message_iv, message_key) {
+    try {
+        console.log(message_iv);
+        const ivArr = message_iv.split(',').map(Number);
+        const iv = new Uint8Array(ivArr);
+        const encryptedBuffer = await base64ToArrayBuffer(message);
+        const jwkKey = {
+            alg: "A128GCM",
+            ext: true,
+            k: message_key,
+            key_ops: ["decrypt"],
+            kty: "oct",
+        }
+        const cryptoKey = await window.crypto.subtle.importKey(
+            "jwk",
+            jwkKey,
+            {
+                name: "AES-GCM",
+                length: 128,
+            },
+            true,
+            ["decrypt"]
+        );
+        
+
+        const decryptedBuffer = await window.crypto.subtle.decrypt(
+            {
+                name: "AES-GCM",
+                iv: iv,
+            },
+            cryptoKey,
+            encryptedBuffer
+        );
+
+        // Convert decryptedBuffer to a readable text
+        const uint8Array = new Uint8Array(decryptedBuffer);
+        const decoder = new TextDecoder();
+        const decryptedText = decoder.decode(uint8Array);
+
+        // const decrypted = await decryptWithPrivateKey(JSON.parse(message.message), currentUser.id);
+        return decryptedText;
+    } catch (error) {
+        console.error("Failed to decrypt message:", error);
+        return "Decryption failed";
+    }
+}

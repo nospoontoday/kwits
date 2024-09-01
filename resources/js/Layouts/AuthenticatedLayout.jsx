@@ -20,9 +20,10 @@ export default function AuthenticatedLayout({ header, children }) {
     const {emit} = useEventBus();
 
     useEffect(() => {
+
         conversations.forEach((conversation) => {
             let channel = `message.group.${conversation.id}`;
-
+    
             if (conversation.is_user) {
                 channel = `message.user.${[
                     user.id,
@@ -31,36 +32,38 @@ export default function AuthenticatedLayout({ header, children }) {
                     .sort()
                     .join(".")}`;
             }
-
+    
             Echo.private(channel)
                 .error((err) => {
                     console.error(err);
                 })
-                .listen("SocketMessage", (e) => {
-
+                .listen("SocketMessage", async (e) => {
                     const message = e.message;
+
+                    // Emit the message event with the decrypted text
                     emit("message.created", message);
+    
                     if (message.sender_id === user.id) {
                         return;
                     }
-
-                    emit("newMessageNotification", {
-                        user: message.sender,
-                        group_id: message.group_id,
-                        message:
-                            message.message ||
-                            `Shared ${
-                                message.attachments.length === 1
-                                    ? "an attachment"
-                                    : message.attachments.length + " attachments"
-                            }`
-                    });
-                }).listen("MessageDeleted", (e) => {
+    
+                    // emit("newMessageNotification", {
+                    //     user: message.sender,
+                    //     group_id: message.group_id,
+                    //     message: decryptedText ||
+                    //         `Shared ${
+                    //             message.attachments.length === 1
+                    //                 ? "an attachment"
+                    //                 : message.attachments.length + " attachments"
+                    //         }`
+                    // });
+                })
+                .listen("MessageDeleted", (e) => {
                     const message = e.message;
                     const prevMessage = e.prevMessage;
                     emit("message.deleted", {message, prevMessage: prevMessage});
                 });
-
+    
             if(conversation.is_group) {
                 Echo.private(`group.deleted.${conversation.id}`)
                     .listen("GroupDeleted", (e) => {
@@ -68,15 +71,14 @@ export default function AuthenticatedLayout({ header, children }) {
                     })
                     .error((err) => {
                         console.error(err);
-                    })
+                    });
             }
         });
-
-        // Return the cleanup function after the loop
+    
         return () => {
             conversations.forEach((conversation) => {
                 let channel = `message.group.${conversation.id}`;
-
+    
                 if (conversation.is_user) {
                     channel = `message.user.${[
                         user.id,
@@ -86,13 +88,14 @@ export default function AuthenticatedLayout({ header, children }) {
                         .join(".")}`;
                 }
                 Echo.leave(channel);
-
+    
                 if(conversation.is_group) {
                     Echo.leave(`group.deleted.${conversation.id}`);
                 }
             });
         };
     }, [conversations]);
+    
 
 
     return (
