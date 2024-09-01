@@ -364,22 +364,25 @@ const MessageInput = ({ conversation = null }) => {
                     </Popover.Panel>
                 </Popover>
                 <AudioRecorder fileReady={recordedAudioReady} />
-                <div
-                    className="tooltip tooltip-top"
-                    data-tip="Add an expense"
-                >
-                    <button
-                        onClick={(event) =>
-                            emit(
-                                "ExpenseModal.show",
-                                conversation
-                            )
-                        }
-                        className="p-1 text-gray-400 hover:text-gray-300"
+                {conversation.is_group && (
+                    <div
+                        className="tooltip tooltip-top"
+                        data-tip="Add an expense"
                     >
-                        <ReceiptPercentIcon className="w-6 h-6" />
-                    </button>
-                </div>
+                        <button
+                            onClick={(event) =>
+                                emit(
+                                    "ExpenseModal.show",
+                                    conversation
+                                )
+                            }
+                            className="p-1 text-gray-400 hover:text-gray-300"
+                        >
+                            <ReceiptPercentIcon className="w-6 h-6" />
+                        </button>
+                    </div>
+                )}
+
             </div>
             <div className="order-1 px-3 xs:p-0 min-w-[220px] basis-full xs:basis-0 xs:order-2 flex-1 relative">
                 <div className="flex">
@@ -457,12 +460,12 @@ const MessageInput = ({ conversation = null }) => {
                     <HandThumbUpIcon className="w-6 h-6" />
                 </button>
                 {conversation.is_group && (
-                    <button onClick={onYouOweMeClick} className="p-1 text-gray-400 hover:text-gray-300">
+                    <button onClick={onYouOweMeClick} className="p-1 text-gray-400 hover:text-gray-300 tooltip tooltip-top" data-tip="Who Owes Me?" >
                         <WalletIcon className="w-6 h-6" />
                     </button>
                 )}
                 {conversation.is_group && (
-                    <button onClick={onIOweYouClick} className="p-1 text-gray-400 hover:text-gray-300">
+                    <button onClick={onIOweYouClick} className="p-1 text-gray-400 hover:text-gray-300 tooltip tooltip-left" data-tip="Who Do I Owe?">
                         <CreditCardIcon className="w-6 h-6" />
                     </button>
                 )}

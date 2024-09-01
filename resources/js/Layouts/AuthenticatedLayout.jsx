@@ -120,12 +120,11 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             <div className="hidden sm:flex sm:items-center sm:ms-6">
                                 <div className="flex ms-3 relative">
-                                    {user.is_admin && (
-                                        <PrimaryButton onClick={event => setShowAddFriendModal(true)}>
-                                            <UserPlusIcon className="h-5 w-5 mr-2" />
-                                            Add User As Friend
-                                        </PrimaryButton>
-                                    )}
+
+                                    <PrimaryButton onClick={event => setShowAddFriendModal(true)}>
+                                        <UserPlusIcon className="h-5 w-5 mr-2" />
+                                        Add User As Friend
+                                    </PrimaryButton>
 
                                     <Dropdown>
                                         <Dropdown.Trigger>
