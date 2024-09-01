@@ -26,14 +26,45 @@ const ChatLayout = ({ children }) => {
     const currentUser = page.props.auth.user.data;
     const isUserOnline = (userId) => onlineUsers[userId];
 
-    const onSearch = (ev) => {
+    const onSearch = async (ev) => {
         const search = ev.target.value.toLowerCase();
-        setLocalConversations(
-            conversations.filter((conversation) => {
-                return conversation.name.toLowerCase().includes(search);
-            })
-        );
+    
+        const decryptConversations = async () => {
+            try {
+                const decryptedConversations = await Promise.all(
+                    conversations.map(async (conversation) => {
+                        if (!conversation.last_message) {
+                            return conversation;
+                        }
+                        try {
+                            const decryptedLastMessage = await decryptWithPrivateKey(
+                                JSON.parse(conversation.last_message),
+                                currentUser.id
+                            );
+                            return {
+                                ...conversation,
+                                last_message: decryptedLastMessage,
+                            };
+                        } catch (error) {
+                            console.error("Failed to decrypt message: ", error);
+                            return conversation; // Return the original conversation if decryption fails
+                        }
+                    })
+                );
+    
+                setLocalConversations(
+                    decryptedConversations.filter((conversation) =>
+                        conversation.name.toLowerCase().includes(search)
+                    )
+                );
+            } catch (error) {
+                console.error("Failed to decrypt conversations: ", error);
+            }
+        };
+    
+        await decryptConversations();
     };
+    
 
     const updateLastMessage = async (conversations, message) => {
         const decryptedMessage = await decryptWithPrivateKey(
