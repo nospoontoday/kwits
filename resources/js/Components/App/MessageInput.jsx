@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, TrashIcon, ReceiptPercentIcon, WalletIcon, CreditCardIcon, UserGroupIcon } from "@heroicons/react/24/solid"; // Import WalletIcon
+import { useState } from "react";
+import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, ReceiptPercentIcon, WalletIcon, CreditCardIcon } from "@heroicons/react/24/solid"; // Import WalletIcon
 import NewMessageInput from './NewMessageInput';
 import axios from "axios";
 import EmojiPicker from "emoji-picker-react";
@@ -10,7 +10,6 @@ import CustomAudioPlayer from "./CustomAudioPlayer";
 import AudioRecorder from "./AudioRecorder";
 import { useEventBus } from "@/EventBus";
 import { arrayBufferToBase64 } from "@/CryptoUtils";
-import { usePage } from "@inertiajs/react";
 
 const MessageInput = ({ conversation = null }) => {
     const [newMessage, setNewMessage] = useState("");

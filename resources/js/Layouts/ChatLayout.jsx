@@ -34,7 +34,7 @@ const ChatLayout = ({ children }) => {
 
     const updateLastMessage = async (conversations, message) => {
         const decryptedMessage = await decryptMessage(message.message, message.iv, message.key);
-    
+
         return conversations.map((conversation) => {
             if (
                 (message.receiver_id && !conversation.is_group && (conversation.id === message.sender_id || conversation.id === message.receiver_id)) ||

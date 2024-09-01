@@ -70,42 +70,62 @@ class MessageController extends Controller
 
     public function destroy(Message $message)
     {
-        $lastMessage = null;
-
-        if($message->sender_id !== auth()->id()) {
-            return response()->json(['message' => "Forbidden"], 403);
+        // Ensure the authenticated user is the sender of the message
+        if ($message->sender_id !== auth()->id()) {
+            return response()->json(['message' => 'Forbidden'], 403);
         }
-
-        $group = $conversation = $lastMessage = null;
-
-        if($message->group_id) {
+    
+        $lastMessage = null;
+        $conversation = null;
+        $group = null;
+    
+        // Determine if the message belongs to a group or one-on-one conversation
+        if ($message->group_id) {
             $group = Group::where('last_message_id', $message->id)->first();
         } else {
             $conversation = Conversation::where('last_message_id', $message->id)->first();
         }
-
-        // If the message is the last in the conversation, delete the conversation
-        if ($conversation) {
-            $conversation->delete();
-        }
-
+    
+        // Delete the message
         $message->delete();
+    
+        // If the message was in a one-on-one conversation
+        if ($conversation) {
+            // Get the last message from the conversation after deleting the current message
+            $lastMessage = Message::where('id', '!=', $message->id)
+                ->where('sender_id', $message->sender_id)
+                ->where('receiver_id', $message->receiver_id)
+                ->orWhere('sender_id', $message->receiver_id)
+                ->where('receiver_id', $message->sender_id)
+                ->latest()
+                ->first();
 
-        if($group) {
+            // Delete the conversation if there are no more messages
+            if (!$lastMessage) {
+                $conversation->delete();
+            } else {
+                // Update the conversation with the new last message
+                $conversation->last_message_id = $lastMessage->id;
+                $conversation->save();
+            }
+        }
+    
+        // If the message was in a group
+        if ($group) {
             $group = Group::find($group->id);
             $lastMessage = $group->lastMessage;
-        } else if($conversation) {
-            $conversation = Conversation::find($conversation->id);
-            $lastMessage = $conversation->lastMessage ?? null;
         }
-
+    
+        // Dispatch an event to notify about the deleted message
         MessageDeleted::dispatch([
-            'prevMessage' => $lastMessage,
-            'deletedMessage' => $message
+            'prevMessage' => $lastMessage ? new MessageResource($lastMessage) : null,
+            'deletedMessage' => new MessageResource($message)
         ]);
-
+    
+        // Return a response indicating the result
         return response()->json(['message' => $lastMessage ? new MessageResource($lastMessage) : null]);
     }
+    
 
     public function store(StoreMessageRequest $request)
     {
