@@ -13,6 +13,7 @@ import { encryptWithPublicKey } from "@/CryptoUtils"; // Assuming you have this 
 
 export default function ExpenseModal({ show = false, onClose = () => {} }) {
     const page = usePage();
+    const currentUser = page.props.auth.user.data;
     const { on, emit } = useEventBus();
     const [expense, setExpense] = useState(null);
     const [group, setGroup] = useState({});
@@ -135,12 +136,12 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                     <UserPicker
                         value={
                             group?.users?.filter(
-                                (u) => group.owner_id !== u.id
+                                (u) => currentUser.id !== u.id
                             ) || []
                         }
                         options={
                             group?.users?.filter(
-                                (u) => group.owner_id !== u.id
+                                (u) => currentUser.id !== u.id
                             ) || []
                         }
                         onSelect={(selectedUsers) =>
