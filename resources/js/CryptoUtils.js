@@ -11,26 +11,37 @@ export async function base64ToArrayBuffer(base64) {
 }
 
 export async function createKeyPair() {
-    const keyPair = await window.crypto.subtle.generateKey({
-        name: "RSA-OAEP",
-        modulusLength: 2048,
-        publicExponent: new Uint8Array([1, 0, 1]),
-        hash: { name: "SHA-256" },
-    }, true, ["encrypt", "decrypt"]);
+    const keyPair = await window.crypto.subtle.generateKey(
+        {
+            name: "RSA-OAEP",
+            modulusLength: 2048,
+            publicExponent: new Uint8Array([1, 0, 1]),
+            hash: { name: "SHA-256" },
+        },
+        true, // Key is extractable
+        ["encrypt", "decrypt"]
+    );
 
     // Export the public key to send to the server
     const publicKeyBuffer = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
-
-    // Convert the public key ArrayBuffer to a Base64-encoded string
     const publicKeyBytes = new Uint8Array(publicKeyBuffer);
     const base64PublicKey = btoa(String.fromCharCode(...publicKeyBytes));
 
-    // Securely store the private key
-    const privateKey = keyPair.privateKey;
-    await securelyStorePrivateKey(privateKey);
+    // Export the private key
+    const privateKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+    const privateKeyBytes = new Uint8Array(privateKeyBuffer);
+    const base64PrivateKey = btoa(String.fromCharCode(...privateKeyBytes));
 
-    return base64PublicKey; // Send this to the server
+    // Securely store the private key
+    await securelyStorePrivateKey(privateKeyBytes);
+
+    return {
+        base64PublicKey,  // Send this to the server
+        base64PrivateKey, // This will be securely stored locally
+    };
 }
+
+
 
 
 export async function arrayBufferToBase64(buffer) {
@@ -90,12 +101,44 @@ export async function decryptMessage(message, message_iv, message_key) {
     }
 }
 
+const requestPrivateKey = async (userId) => {
+    
+    const response = await axios.post(route('key.retrieve.private'), {
+        user_id: userId,
+    });
+    
+    // Assuming the response contains the Base64 encoded private key
+    const base64PrivateKey = response.data.private_key;
+
+    // Convert Base64 encoded private key to ArrayBuffer
+    const privateKeyArrayBuffer = await base64ToArrayBuffer(base64PrivateKey);
+
+    // Import the private key
+    const privateKey = await window.crypto.subtle.importKey(
+        "pkcs8",
+        privateKeyArrayBuffer,
+        { name: "RSA-OAEP", hash: "SHA-256" },
+        true,
+        ["decrypt"]
+    );
+    
+    // Export the private key to pkcs8 format
+    const exportedKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", privateKey);
+    const privateKeyBytes = new Uint8Array(exportedKeyBuffer);
+
+    await securelyStorePrivateKey(privateKeyBytes);
+};
+
 export async function decryptWithPrivateKey(encryptedMessages, userId) {
     // Retrieve the private key from secure storage
     const storedPrivateKey = secureStorage.getItem("privateKey");
 
     if (!storedPrivateKey) {
-        throw new Error("Private key not found");
+        await requestPrivateKey(userId);
+
+        if(!secureStorage.getItem("privateKey")) {
+            throw new Error("Private key not found");
+        }   
     }
 
     // Decode the Base64 encoded private key
@@ -223,10 +266,11 @@ export async function encryptWithPublicKey(base64PublicKey, message) {
     return base64Encrypted;  // Return the Base64-encoded string
 }
 
-
-export async function securelyStorePrivateKey(privateKey) {
-    const exportedPrivateKey = await window.crypto.subtle.exportKey("pkcs8", privateKey);
-    secureStorage.setItem("privateKey", btoa(String.fromCharCode(...new Uint8Array(exportedPrivateKey))));
+export async function securelyStorePrivateKey(privateKeyBytes) {
+    // Example implementation: storing Base64 encoded string
+    const base64PrivateKey = btoa(String.fromCharCode(...privateKeyBytes));
+    // Use a secure storage method appropriate for your environment
+    secureStorage.setItem("privateKey", base64PrivateKey);
 }
 
 async function encryptPrivateKey(privateKey, pin) {

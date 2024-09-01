@@ -23,35 +23,6 @@ const MessageInput = ({ conversation = null }) => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const { emit } = useEventBus();
 
-    // useEffect(() => {
-    //     const initKeys = async () => {
-    //         try {
-    //             if (!currentUser.public_key) {
-    //                 // Generate key pair and set the public key
-    //                 const pubKey = await createKeyPair();
-    //                 setPublicKey(pubKey);
-
-    //                 // Send publicKey to the server
-    //                 const formData = new FormData();
-    //                 formData.append("public_key", pubKey);
-
-    //                 await axios.post(route("key.store"), formData);
-    //             } else {
-    //                 // Use the stored public key
-    //                 const decodedPublicKey = new Uint8Array(
-    //                     atob(currentUser.public_key).split("").map(c => c.charCodeAt(0))
-    //                 );
-    //                 setPublicKey(decodedPublicKey);
-    //             }
-    //         } catch (error) {
-    //             console.error("Error initializing keys:", error);
-    //             setInputErrorMessage("Failed to initialize encryption keys.");
-    //         }
-    //     };
-
-    //     initKeys();
-    // }, [currentUser.public_key]);
-
     const onFileChange = (event) => {
         const files = event.target.files;
 

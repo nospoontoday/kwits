@@ -46,6 +46,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
     Route::post('/expense', [ExpenseController::class, 'store'])->name('expense.store');
 
     Route::post('/key', [KeyController::class, 'store'])->name('key.store');
+    
+    Route::post('/retrieve-private', [KeyController::class, 'retrievePrivateKey'])->name('key.retrieve.private');
 
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');

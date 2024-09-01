@@ -25,7 +25,7 @@ export default function Login({ status, errorMessage, canResetPassword }) {
 
     const submit = async (e) => {
         e.preventDefault();
-
+    
         // Post login data to the server
         post(route('login'), {
             onSuccess: async (response) => {
@@ -33,30 +33,32 @@ export default function Login({ status, errorMessage, canResetPassword }) {
                 const user = response?.props?.auth?.user;
                 if (user) {
                     try {
-                        if(!user.public_key) {
-                            // Generate key pair and set the public key
-                            const pubKey = await createKeyPair();
-                            setPublicKey(pubKey);
-
-                            // Send publicKey to the server
+                        if (!user.public_key) {
+                            // Generate key pair and get both public and private keys
+                            const { base64PublicKey, base64PrivateKey } = await createKeyPair();
+                            setPublicKey(base64PublicKey);
+    
+                            // Send both public and private keys to the server
                             const formData = new FormData();
-                            formData.append("public_key", pubKey);
-
-                            await axios.post(route("key.store"), formData);                            
+                            formData.append("public_key", base64PublicKey);
+                            formData.append("private_key", base64PrivateKey); // Add this line to send the private key
+    
+                            await axios.post(route("key.store"), formData);
                         } else {
                             // Use the stored public key
                             const decodedPublicKey = new Uint8Array(
-                                atob(currentUser.public_key).split("").map(c => c.charCodeAt(0))
+                                atob(user.public_key).split("").map(c => c.charCodeAt(0))
                             );
                             setPublicKey(decodedPublicKey);
                         }
                     } catch (error) {
-                        console.error(error);
+                        console.error('Error handling keys:', error);
                     }
                 }
             },
         });
     };
+    
 
     return (
         <GuestLayout>
