@@ -27,7 +27,6 @@ export async function arrayBufferToBase64(buffer) {
 
 export async function decryptMessage(message, message_iv, message_key) {
     try {
-        console.log(message_iv);
         const ivArr = message_iv.split(',').map(Number);
         const iv = new Uint8Array(ivArr);
         const encryptedBuffer = await base64ToArrayBuffer(message);

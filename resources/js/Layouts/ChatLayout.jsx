@@ -18,7 +18,7 @@ const ChatLayout = ({ children }) => {
     const [onlineUsers, setOnlineUsers] = useState({});
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [showExpenseModal, setShowExpenseModal] = useState(false);
-    const [ showFriendRequestModal, setShowFriendRequestModal ] = useState(false);
+    const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
     const { on, emit } = useEventBus();
 
     const isUserOnline = (userId) => onlineUsers[userId];
@@ -29,103 +29,84 @@ const ChatLayout = ({ children }) => {
             conversations.filter((conversation) => {
                 return conversation.name.toLowerCase().includes(search);
             })
-        )
-    }
+        );
+    };
 
-    const messageCreated = (message) => {
-        setLocalConversations((oldUsers) => {
-            return oldUsers.map((user) => {
-                if(message.receiver_id && !user.is_group && (user.id == message.sender_id || user.id == message.receiver_id)) {
-                    user.last_message = message.message;
-                    user.last_message_date = message.created_at;
-                    return user;
-                }
+    const updateLastMessage = async (conversations, message) => {
+        const decryptedMessage = await decryptMessage(message.message, message.iv, message.key);
+    
+        return conversations.map((conversation) => {
+            if (
+                (message.receiver_id && !conversation.is_group && (conversation.id === message.sender_id || conversation.id === message.receiver_id)) ||
+                (message.group_id && conversation.is_group && conversation.id === message.group_id)
+            ) {
+                return {
+                    ...conversation,
+                    last_message: decryptedMessage,
+                    last_message_date: message.created_at,
+                };
+            }
+            return conversation;
+        });
+    };
+    
 
-                if(message.group_id && user.is_group && user.id == message.group_id) {
-                    user.last_message = message.message;
-                    user.last_message_date = message.created_at;
-                    return user;
-                }
+    const messageCreated = async (message) => {
+        // Update conversations with the newly created message
+        const updatedConversations = await updateLastMessage(localConversations, message);
+        setLocalConversations(updatedConversations);
+    };
 
-                return user;
-            })
-        })
-    }
-
-    const messageDeleted = ({prevMessage}) => {
-        if(!prevMessage) {
-            return;
+    const messageDeleted = async ({ prevMessage }) => {
+        if (prevMessage) {
+            // Update conversations with the deleted message
+            const updatedConversations = await updateLastMessage(localConversations, prevMessage);
+            setLocalConversations(updatedConversations);
         }
-
-        setLocalConversations((oldUsers) => {
-            return oldUsers.map((u) => {
-                if(prevMessage.receiver_id && !u.is_group && (u.id == prevMessage.sender_id || u.id == prevMessage.receiver_id)) {
-                    u.last_message = prevMessage.message;
-                    u.last_message_date = prevMessage.created_at;
-                    return u;
-                }
-
-                if(prevMessage.group_id && u.is_group && u.id == prevMessage.group_id) {
-                    u.last_message = prevMessage.message;
-                    u.last_message_date = prevMessage.created_at;
-                    return u;
-                }
-
-                return u;
-            })
-        })
-    }
+    };
+    
+    
 
     useEffect(() => {
-        const offCreated = on("message.created", messageCreated);
-        const offDeleted = on("message.deleted", messageDeleted);
-        const offModalShow = on("GroupModal.show", (group) => {
-            setShowGroupModal(true);
-        });
-        const offExpenseModalShow = on("ExpenseModal.show", (conversation) => {
-            setShowExpenseModal(true);
-        })
-        const offGroupDelete = on("group.deleted", ({id, name}) => {
-            setLocalConversations((oldConversations) => {
-                return oldConversations.filter((con) => con.id != id);
-            });
+        const decryptConversations = async () => {
+            const decryptedConversations = await Promise.all(
+                conversations.map(async (conversation) => {
+                    if (!conversation.last_message) {
+                        return conversation;
+                    }
+                    const decryptedLastMessage = await decryptMessage(
+                        conversation.last_message,
+                        conversation.iv,
+                        conversation.key
+                    );
+                    return {
+                        ...conversation,
+                        last_message: decryptedLastMessage,
+                    };
+                })
+            );
+            setLocalConversations(decryptedConversations);
+        };
 
-            emit('toast.show', `Group ${name} was deleted`);
-
-            setTimeout(() => {
-                if(!selectedConversation || (selectedConversation.is_group && selectedConversation.id == id)) {
-                    router.visit(route("dashboard"));
-                }
-            }, 100); // Adjust the delay as necessary
-        });
-
-        return () => {
-            offCreated();
-            offDeleted();
-            offModalShow();
-            offGroupDelete();
-            offExpenseModalShow();
-        }
-    }, [on])
+        decryptConversations();
+    }, [conversations]);
 
     useEffect(() => {
         setSortedConversations(
             localConversations.sort((a, b) => {
-                if(a.blocked_at && b.blocked_at) {
-                    return a.blocked_at > b.blocked_at ? 1: -1;
+                if (a.blocked_at && b.blocked_at) {
+                    return a.blocked_at > b.blocked_at ? 1 : -1;
                 } else if (a.blocked_at) {
                     return 1;
                 } else if (b.blocked_at) {
                     return -1;
                 }
 
-                if(a.last_message_date && b.last_message_date) {
-                    return b.last_message_date.localeCompare(
-                        a.last_message_date
-                    );
+                if (a.last_message_date && b.last_message_date) {
+                    return b.last_message_date.localeCompare(a.last_message_date);
                 } else if (a.last_message_date) {
                     return -1;
-                } else if(b.last_message_date) {
+                } else if (b.last_message_date) {
                     return 1;
                 } else {
                     return 0;
@@ -135,86 +116,85 @@ const ChatLayout = ({ children }) => {
     }, [localConversations]);
 
     useEffect(() => {
-        const decryptConversations = async () => {
-            const decryptedConversations = await Promise.all(
-                conversations.map(async (conversation) => {
-
-                    let decryptedLastMessage = "";
-
-                    if(conversation.last_message) {
-                        decryptedLastMessage = await decryptMessage(conversation.last_message, conversation.iv, conversation.key);
-                    }
-
-                    return {
-                        ...conversation,
-                        name: conversation.name,
-                        last_message: decryptedLastMessage
-                    };
-                })
+        const offCreated = on("message.created", async (message) => {
+            await messageCreated(message);
+        });
+        const offDeleted = on("message.deleted", async (message) => {
+            await messageDeleted(message);
+        });
+        const offModalShow = on("GroupModal.show", () => setShowGroupModal(true));
+        const offExpenseModalShow = on("ExpenseModal.show", () => setShowExpenseModal(true));
+        const offGroupDelete = on("group.deleted", ({ id, name }) => {
+            setLocalConversations((oldConversations) =>
+                oldConversations.filter((con) => con.id !== id)
             );
-            setLocalConversations(decryptedConversations);
+
+            emit("toast.show", `Group ${name} was deleted`);
+
+            setTimeout(() => {
+                if (!selectedConversation || (selectedConversation.is_group && selectedConversation.id === id)) {
+                    router.visit(route("dashboard"));
+                }
+            }, 100);
+        });
+
+        return () => {
+            offCreated();
+            offDeleted();
+            offModalShow();
+            offExpenseModalShow();
+            offGroupDelete();
         };
-    
-        decryptConversations();
-    }, [conversations]);
+    }, [on, localConversations]);
 
     useEffect(() => {
-        Echo.join('online')
+        Echo.join("online")
             .here((users) => {
-                const onlineUsersObj = Object.fromEntries(
-                    users.map((user) => [user.id, user])
-                );
-
-                setOnlineUsers((previousOnlineUsers) => {
-                    return {...previousOnlineUsers, ...onlineUsersObj };
-                });
+                const onlineUsersObj = Object.fromEntries(users.map((user) => [user.id, user]));
+                setOnlineUsers((previousOnlineUsers) => ({
+                    ...previousOnlineUsers,
+                    ...onlineUsersObj,
+                }));
             })
             .joining((user) => {
-                setOnlineUsers((previousOnlineUsers) => {
-                    const updatedUsers = { ...previousOnlineUsers };
-                    updatedUsers[user.id] = user;
-                    return updatedUsers;
-                });
+                setOnlineUsers((previousOnlineUsers) => ({
+                    ...previousOnlineUsers,
+                    [user.id]: user,
+                }));
             })
             .leaving((user) => {
                 setOnlineUsers((previousOnlineUsers) => {
-                    const updatedUsers = { ...previousOnlineUsers }
+                    const updatedUsers = { ...previousOnlineUsers };
                     delete updatedUsers[user.id];
                     return updatedUsers;
                 });
             })
             .error((error) => {
-                console.error('error', error);
-            })
+                console.error("error", error);
+            });
     }, []);
 
     return (
         <>
             <div className="flex-1 w-full flex overflow-hidden">
-            <div
-                className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
-                    selectedConversation ? "sm:ml-0 -ml-[100%]" : ""
-                }`}
-            >
+                <div
+                    className={`transition-all w-full sm:w-[220px] md:w-[300px] bg-slate-800 flex flex-col overflow-hidden ${
+                        selectedConversation ? "sm:ml-0 -ml-[100%]" : ""
+                    }`}
+                >
                     <div className="flex items-center justify-between py-2 px-3 text-xl font-medium text-gray-200">
                         My Conversations
-                        <div
-                            className="tooltip tooltip-left"
-                            data-tip="Create new Group"
-                        >
+                        <div className="tooltip tooltip-left" data-tip="Create new Group">
                             <button
-                                onClick={ev => setShowGroupModal(true)}
+                                onClick={() => setShowGroupModal(true)}
                                 className="text-gray-400 hover:text-gray-200"
                             >
                                 <PencilSquareIcon className="w-4 h-4 inline-block l-2" />
                             </button>
                         </div>
-                        <div
-                            className="tooltip tooltip-left"
-                            data-tip="Friend requests"
-                        >
+                        <div className="tooltip tooltip-left" data-tip="Friend requests">
                             <button
-                                onClick={ev => setShowFriendRequestModal(true)}
+                                onClick={() => setShowFriendRequestModal(true)}
                                 className="text-gray-400 hover:text-gray-200"
                             >
                                 <UsersIcon className="w-4 h-4 inline-block l-2" />
@@ -253,6 +233,6 @@ const ChatLayout = ({ children }) => {
             <FriendRequestModal show={showFriendRequestModal} onClose={() => setShowFriendRequestModal(false)} />
         </>
     );
-}
+};
 
 export default ChatLayout;
