@@ -24,12 +24,15 @@ class User extends Authenticatable
         'password',
         'avatar',
         'email_verified_at',
-        'is_admin'
+        'is_admin',
+        'public_key',
+        'private_key',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'private_key',
     ];
 
     protected $casts = [
@@ -112,9 +115,7 @@ class User extends Authenticatable
         $query = self::select([
                     'users.*',
                     'messages.message as last_message',
-                    'messages.created_at as last_message_date',
-                    'messages.iv as last_message_iv',
-                    'messages.key as last_message_key'
+                    'messages.created_at as last_message_date'
                 ])
                 ->where('users.id', '!=', $userId)
                 ->where(function($query) use ($userId, $friendIds) {
@@ -156,13 +157,14 @@ class User extends Authenticatable
             'is_group' => false,
             'is_user' => true,
             'is_admin' => (bool) $this->is_admin,
+            'public_key' => $this->public_key,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'blocked_at' => $this->blocked_at,
             'last_message' => $this->last_message,
             'last_message_date' => $this->last_message_date ? ($this->last_message_date . ' UTC') : null,
-            'iv' => $this->last_message_iv,
-            'key' => $this->last_message_key,
+            // 'iv' => $this->last_message_iv,
+            // 'key' => $this->last_message_key,
         ];
     }
 }

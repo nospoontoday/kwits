@@ -62,8 +62,8 @@ class Group extends Model
                     'groups.*',
                     'messages.message as last_message',
                     'messages.created_at as last_message_date',
-                    'messages.iv as last_message_iv',
-                    'messages.key as last_message_key'
+                    // 'messages.iv as last_message_iv',
+                    // 'messages.key as last_message_key'
                 ])
                 ->join('group_members', 'group_members.group_id', '=', 'groups.id')
                 ->leftJoin('messages', 'messages.id', '=', 'groups.last_message_id')
@@ -90,8 +90,8 @@ class Group extends Model
             'updated_at' => $this->updated_at,
             'last_message' => $this->last_message,
             'last_message_date' => $this->last_message_date ? ($this->last_message_date . ' UTC') : null,
-            'iv' => $this->last_message_iv,
-            'key' => $this->last_message_key,
+            // 'iv' => $this->last_message_iv,
+            // 'key' => $this->last_message_key,
         ];
     }
 

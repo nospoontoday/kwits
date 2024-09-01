@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, ReceiptPercentIcon, WalletIcon, CreditCardIcon } from "@heroicons/react/24/solid"; // Import WalletIcon
 import NewMessageInput from './NewMessageInput';
 import axios from "axios";
@@ -9,15 +9,48 @@ import AttachmentPreview from "./AttachmentPreview";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 import AudioRecorder from "./AudioRecorder";
 import { useEventBus } from "@/EventBus";
-import { arrayBufferToBase64 } from "@/CryptoUtils";
+import { arrayBufferToBase64, createKeyPair, encryptMessageForUsers, encryptWithPublicKey } from "@/CryptoUtils";
+import { usePage } from "@inertiajs/react";
 
 const MessageInput = ({ conversation = null }) => {
+    const page = usePage();
+    const currentUser = page.props.auth.user.data;
     const [newMessage, setNewMessage] = useState("");
+    const [publicKey, setPublicKey] = useState(null);
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [messageSending, setMessageSending] = useState(false);
     const [chosenFiles, setChosenFiles] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(0);
     const { emit } = useEventBus();
+
+    // useEffect(() => {
+    //     const initKeys = async () => {
+    //         try {
+    //             if (!currentUser.public_key) {
+    //                 // Generate key pair and set the public key
+    //                 const pubKey = await createKeyPair();
+    //                 setPublicKey(pubKey);
+
+    //                 // Send publicKey to the server
+    //                 const formData = new FormData();
+    //                 formData.append("public_key", pubKey);
+
+    //                 await axios.post(route("key.store"), formData);
+    //             } else {
+    //                 // Use the stored public key
+    //                 const decodedPublicKey = new Uint8Array(
+    //                     atob(currentUser.public_key).split("").map(c => c.charCodeAt(0))
+    //                 );
+    //                 setPublicKey(decodedPublicKey);
+    //             }
+    //         } catch (error) {
+    //             console.error("Error initializing keys:", error);
+    //             setInputErrorMessage("Failed to initialize encryption keys.");
+    //         }
+    //     };
+
+    //     initKeys();
+    // }, [currentUser.public_key]);
 
     const onFileChange = (event) => {
         const files = event.target.files;
@@ -45,71 +78,69 @@ const MessageInput = ({ conversation = null }) => {
             return;
         }
 
-        try {
-            const formData = new FormData();
+        if (currentUser.public_key) {
+            try {
 
-            const arr = new Uint8Array(12);
-            const iv = window.crypto.getRandomValues(arr);
-            const cryptoKey = await window.crypto.subtle.generateKey(
-                {
-                    name: 'AES-GCM',
-                    length: 128,
-                },
-                true,
-                ["encrypt", "decrypt"]
-            );
-            const jwkKey = await window.crypto.subtle.exportKey("jwk", cryptoKey);
-            const encryptionKey = jwkKey.k
-            const messageInBytes = new TextEncoder().encode(newMessage);
-            const encryptedBuffer = await window.crypto.subtle.encrypt(
-                {
-                    name: "AES-GCM",
-                    iv,
-                },
-                cryptoKey,
-                messageInBytes
-            )
+                const formData = new FormData();
+                const encryptedMessages = {};
 
-            const encryptedBase64 = await arrayBufferToBase64(encryptedBuffer);
+                if (conversation.is_group) {
+                    const users = conversation.users;
+                    
+            
+                    // Encrypt the message for each user in the group
+                    await Promise.all(users.map(async (user) => {
+                        if (user.public_key) {
+                            const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
+                            encryptedMessages[user.id] = encrypted;
+                        }
+                    }));
 
-            formData.append("message", encryptedBase64);
-            formData.append("iv", iv);
-            formData.append("key", encryptionKey);
-        
-            chosenFiles.forEach((file) => {
-                formData.append("attachments[]", file.file);
-            });
-        
-            if (conversation.is_group) {
-                formData.append("group_id", conversation.id);
+                    // Assuming your backend can handle an array of encrypted messages for each recipient
+                    formData.append("message", JSON.stringify(encryptedMessages));
+                } else if (conversation.is_user) {
+                    // Encrypt the message for a single recipient
+                    const encryptedReceiver = await encryptWithPublicKey(conversation.public_key, newMessage);
+                    encryptedMessages[conversation.id] = encryptedReceiver;
+
+                    const encryptedSender = await encryptWithPublicKey(currentUser.public_key, newMessage);
+                    encryptedMessages[currentUser.id] = encryptedSender;
+
+                    formData.append("message", JSON.stringify(encryptedMessages));
+                    formData.append("receiver_id", conversation.id);
+                }
+            
+                chosenFiles.forEach((file) => {
+                    formData.append("attachments[]", file.file);
+                });
+            
+                if (conversation.is_group) {
+                    formData.append("group_id", conversation.id);
+                }
+            
+                setMessageSending(true);
+            
+                await axios.post(route("message.store"), formData, {
+                    onUploadProgress: (progressEvent) => {
+                        const progress = Math.round(
+                            (progressEvent.loaded / progressEvent.total) * 100
+                        );
+                        setUploadProgress(progress);
+                    },
+                });
+            
+                setNewMessage("");
+                setMessageSending(false);
+                setUploadProgress(0);
+                setChosenFiles([]);
+            } catch (err) {
+                setMessageSending(false);
+                setUploadProgress(0);
+                setChosenFiles([]);
+                const message = err?.response?.data?.message;
+                setInputErrorMessage(message || "An error occurred while sending the message");
+                console.error(err);
             }
-
-            if (conversation.is_user) {
-                formData.append("receiver_id", conversation.id);
-            }
-        
-            setMessageSending(true);
-        
-            await axios.post(route("message.store"), formData, {
-                onUploadProgress: (progressEvent) => {
-                    const progress = Math.round(
-                        (progressEvent.loaded / progressEvent.total) * 100
-                    );
-                    setUploadProgress(progress);
-                },
-            });
-        
-            setNewMessage("");
-            setMessageSending(false);
-            setUploadProgress(0);
-            setChosenFiles([]);
-        } catch (err) {
-            setMessageSending(false);
-            setUploadProgress(0);
-            setChosenFiles([]);
-            const message = err?.response?.data?.message;
-            setInputErrorMessage(message || "An error occurred while sending the message");
-            console.error(err);
         }
     }
 

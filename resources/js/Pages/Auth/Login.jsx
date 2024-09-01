@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Checkbox from '@/Components/Checkbox';
 import GuestLayout from '@/Layouts/GuestLayout';
 import InputError from '@/Components/InputError';
@@ -6,8 +6,11 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { checkAndGenerateKeys, createKeyPair } from '@/CryptoUtils';
 
 export default function Login({ status, errorMessage, canResetPassword }) {
+    const [publicKey, setPublicKey] = useState(null);
+    
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -20,10 +23,39 @@ export default function Login({ status, errorMessage, canResetPassword }) {
         };
     }, []);
 
-    const submit = (e) => {
+    const submit = async (e) => {
         e.preventDefault();
 
-        post(route('login'));
+        // Post login data to the server
+        post(route('login'), {
+            onSuccess: async (response) => {
+                // If login is successful, proceed to check or generate keys
+                const user = response?.props?.auth?.user;
+                if (user) {
+                    try {
+                        if(!user.public_key) {
+                            // Generate key pair and set the public key
+                            const pubKey = await createKeyPair();
+                            setPublicKey(pubKey);
+
+                            // Send publicKey to the server
+                            const formData = new FormData();
+                            formData.append("public_key", pubKey);
+
+                            await axios.post(route("key.store"), formData);                            
+                        } else {
+                            // Use the stored public key
+                            const decodedPublicKey = new Uint8Array(
+                                atob(currentUser.public_key).split("").map(c => c.charCodeAt(0))
+                            );
+                            setPublicKey(decodedPublicKey);
+                        }
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+            },
+        });
     };
 
     return (

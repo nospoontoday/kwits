@@ -3,7 +3,7 @@ import ExpenseModal from "@/Components/App/ExpenseModal";
 import FriendRequestModal from "@/Components/App/FriendRequestModal";
 import GroupModal from "@/Components/App/GroupModal";
 import TextInput from "@/Components/TextInput";
-import { decryptMessage } from "@/CryptoUtils";
+import { decryptWithPrivateKey } from "@/CryptoUtils"; // Import decryptWithPrivateKey
 import { useEventBus } from "@/EventBus";
 import { PencilSquareIcon, UsersIcon } from "@heroicons/react/24/solid";
 import { router, usePage } from "@inertiajs/react";
@@ -21,6 +21,7 @@ const ChatLayout = ({ children }) => {
     const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
     const { on, emit } = useEventBus();
 
+    const currentUser = page.props.auth.user.data;
     const isUserOnline = (userId) => onlineUsers[userId];
 
     const onSearch = (ev) => {
@@ -33,7 +34,10 @@ const ChatLayout = ({ children }) => {
     };
 
     const updateLastMessage = async (conversations, message) => {
-        const decryptedMessage = await decryptMessage(message.message, message.iv, message.key);
+        const decryptedMessage = await decryptWithPrivateKey(
+            JSON.parse(message.message),
+            currentUser.id
+        );
 
         return conversations.map((conversation) => {
             if (
@@ -49,7 +53,6 @@ const ChatLayout = ({ children }) => {
             return conversation;
         });
     };
-    
 
     const messageCreated = async (message) => {
         // Update conversations with the newly created message
@@ -64,8 +67,6 @@ const ChatLayout = ({ children }) => {
             setLocalConversations(updatedConversations);
         }
     };
-    
-    
 
     useEffect(() => {
         const decryptConversations = async () => {
@@ -74,10 +75,9 @@ const ChatLayout = ({ children }) => {
                     if (!conversation.last_message) {
                         return conversation;
                     }
-                    const decryptedLastMessage = await decryptMessage(
-                        conversation.last_message,
-                        conversation.iv,
-                        conversation.key
+                    const decryptedLastMessage = await decryptWithPrivateKey(
+                        JSON.parse(conversation.last_message), // Assuming conversation.last_message is a JSON string with encrypted data
+                        currentUser.id
                     );
                     return {
                         ...conversation,
@@ -89,7 +89,7 @@ const ChatLayout = ({ children }) => {
         };
 
         decryptConversations();
-    }, [conversations]);
+    }, [conversations, currentUser.id]);
 
     useEffect(() => {
         setSortedConversations(

@@ -5,7 +5,7 @@ import UserAvatar from "./UserAvatar";
 import { formatMessageDateLong } from '@/helpers';
 import MessageAttachments from "./MessageAttachments";
 import MessageOptionsDropdown from "./MessageOptionsDropdown";
-import { base64ToArrayBuffer } from "@/CryptoUtils";
+import { base64ToArrayBuffer, decryptWithPrivateKey } from "@/CryptoUtils"; // Import decryptWithPrivateKey
 
 const MessageItem = ({ message, attachmentClick }) => {
     const currentUser = usePage().props.auth.user.data;
@@ -14,44 +14,9 @@ const MessageItem = ({ message, attachmentClick }) => {
     useEffect(() => {
         async function decryptMessage() {
             try {
-                const ivArr = message.iv.split(',').map(Number);
-                const iv = new Uint8Array(ivArr);
-                const encryptedBuffer = await base64ToArrayBuffer(message.message);
-                const jwkKey = {
-                    alg: "A128GCM",
-                    ext: true,
-                    k: message.key,
-                    key_ops: ["decrypt"],
-                    kty: "oct",
-                }
-                const cryptoKey = await window.crypto.subtle.importKey(
-                    "jwk",
-                    jwkKey,
-                    {
-                        name: "AES-GCM",
-                        length: 128,
-                    },
-                    true,
-                    ["decrypt"]
-                );
-                
-
-                const decryptedBuffer = await window.crypto.subtle.decrypt(
-                    {
-                        name: "AES-GCM",
-                        iv: iv,
-                    },
-                    cryptoKey,
-                    encryptedBuffer
-                );
-
-                // Convert decryptedBuffer to a readable text
-                const uint8Array = new Uint8Array(decryptedBuffer);
-                const decoder = new TextDecoder();
-                const decryptedText = decoder.decode(uint8Array);
-
-                // const decrypted = await decryptWithPrivateKey(JSON.parse(message.message), currentUser.id);
-                setDecryptedMessage(decryptedText);
+                // Decrypt the message based on the user's ID
+                const decrypted = await decryptWithPrivateKey(JSON.parse(message.message), currentUser.id);
+                setDecryptedMessage(decrypted);
             } catch (error) {
                 console.error("Failed to decrypt message:", error);
                 setDecryptedMessage("Decryption failed");
@@ -63,7 +28,7 @@ const MessageItem = ({ message, attachmentClick }) => {
         } else {
             setDecryptedMessage("No message");
         }
-    }, [message.message]);
+    }, [message.message, currentUser.id]);
 
     return (
         <div
@@ -95,7 +60,7 @@ const MessageItem = ({ message, attachmentClick }) => {
                     )
                 }
             >
-                {message.sender_id == currentUser.id && (
+                {message.sender_id === currentUser.id && (
                     <MessageOptionsDropdown message={message} />
                 )}
                 <div className="chat-message">
