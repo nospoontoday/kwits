@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\App;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,36 +19,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create the owner user
-        $owner = User::factory()->create([
-            'name' => 'John Doe',
-            'email' => 'oliverjohnpr2013@gmail.com',
-            'password' => bcrypt('password'),
-            'is_admin' => true,
-        ]);
-
-        // Create another specific user
-        User::factory()->create([
-            'name' => 'Jane Doe',
-            'email' => 'jane@example.com',
-            'password' => bcrypt('password'),
-        ]);
-
-        // Create 10 random users
-        User::factory(10)->create();
-
-        // Create 5 groups
-        for ($i = 0; $i < 5; $i++) {
-            $group = Group::factory()->create([
-                'owner_id' => $owner->id,
-            ]);
-
-            // Add random users to the group, including the owner
-            $randomUsers = User::inRandomOrder()->limit(rand(2, 5))->pluck('id')->toArray();
-            $groupMembers = array_unique(array_merge([$owner->id], $randomUsers));
-            $group->members()->attach($groupMembers);
-        }
-
         $currencies = [
             ['code' => 'usd', 'symbol' => '$'],
             ['code' => 'eur', 'symbol' => '€'],
@@ -78,34 +49,48 @@ class DatabaseSeeder extends Seeder
             ['code' => 'kzt', 'symbol' => '₸'],
         ];
 
-        foreach ($currencies as $currency) {
-            Currency::updateOrCreate(['code' => $currency['code']], ['symbol' => $currency['symbol']]);
+        if (App::environment('local')) {
+            // Run the full seeder only in local environment
+
+            // Create the owner user
+            $owner = User::factory()->create([
+                'name' => 'John Doe',
+                'email' => 'oliverjohnpr2013@gmail.com',
+                'password' => bcrypt('password'),
+                'is_admin' => true,
+            ]);
+
+            // Create another specific user
+            User::factory()->create([
+                'name' => 'Jane Doe',
+                'email' => 'jane@example.com',
+                'password' => bcrypt('password'),
+            ]);
+
+            // Create 10 random users
+            User::factory(10)->create();
+
+            // Create 5 groups
+            for ($i = 0; $i < 5; $i++) {
+                $group = Group::factory()->create([
+                    'owner_id' => $owner->id,
+                ]);
+
+                // Add random users to the group, including the owner
+                $randomUsers = User::inRandomOrder()->limit(rand(2, 5))->pluck('id')->toArray();
+                $groupMembers = array_unique(array_merge([$owner->id], $randomUsers));
+                $group->members()->attach($groupMembers);
+            }
+
+            foreach ($currencies as $currency) {
+                Currency::updateOrCreate(['code' => $currency['code']], ['symbol' => $currency['symbol']]);
+            }
+
+        } else {
+
+            foreach ($currencies as $currency) {
+                Currency::updateOrCreate(['code' => $currency['code']], ['symbol' => $currency['symbol']]);
+            }
         }
-
-        // Create 1000 messages
-        // Message::factory(1000)->create();
-
-        // // Retrieve messages without a group and order them by creation date
-        // $messages = Message::whereNull('group_id')->orderBy('created_at')->get();
-
-        // // Group messages by sender and receiver pair
-        // $conversations = $messages->groupBy(function ($message) {
-        //     return collect([$message->sender_id, $message->receiver_id])->sort()->implode('_');
-        // });
-
-        // // Prepare conversations for insertion
-        // $conversationData = $conversations->map(function ($groupedMessages) {
-        //     return [
-        //         'id' => (string) \Illuminate\Support\Str::uuid(), // Ensure UUID is generated
-        //         'user_id1' => $groupedMessages->first()->sender_id,
-        //         'user_id2' => $groupedMessages->first()->receiver_id,
-        //         'last_message_id' => $groupedMessages->last()->id,
-        //         'created_at' => Carbon::now(),
-        //         'updated_at' => Carbon::now(),
-        //     ];
-        // })->values();
-
-        // // Insert or ignore conversations
-        // Conversation::insertOrIgnore($conversationData->toArray());
     }
 }
