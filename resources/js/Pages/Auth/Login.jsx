@@ -6,7 +6,6 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { createKeyPair } from '@/CryptoUtils';
 
 export default function Login({ status, errorMessage, canResetPassword }) {
     const [publicKey, setPublicKey] = useState(null);
@@ -98,6 +97,16 @@ export default function Login({ status, errorMessage, canResetPassword }) {
                     </PrimaryButton>
                 </div>
             </form>
+
+            <div className="flex items-center justify-center mt-6">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Don't have an account?</span>
+                <Link
+                    href={route('register')}
+                    className="ml-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                >
+                    Register
+                </Link>
+            </div>
         </GuestLayout>
     );
 }
