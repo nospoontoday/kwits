@@ -368,9 +368,6 @@ const MessageInput = ({ conversation = null }) => {
                         <ReceiptPercentIcon className="w-6 h-6" />
                     </button>
                 )}
-                <button onClick={onLikeClick} className="p-1 text-gray-400 hover:text-gray-300">
-                    <HandThumbUpIcon className="w-6 h-6" />
-                </button>
                 {conversation.is_group && (
                     <button
                         onClick={onYouOweMeClick}
@@ -389,6 +386,9 @@ const MessageInput = ({ conversation = null }) => {
                         <CreditCardIcon className="w-6 h-6" />
                     </button>
                 )}
+                <button onClick={onLikeClick} className="p-1 text-gray-400 hover:text-gray-300">
+                    <HandThumbUpIcon className="w-6 h-6" />
+                </button>
             </div>
             <div className="order-1 px-3 xs:p-0 min-w-[220px] basis-full xs:basis-0 xs:order-2 flex-1 relative">
                 <div className="flex xs:flex-col">
