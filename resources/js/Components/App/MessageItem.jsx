@@ -5,7 +5,7 @@ import UserAvatar from "./UserAvatar";
 import { formatMessageDateLong } from '@/helpers';
 import MessageAttachments from "./MessageAttachments";
 import MessageOptionsDropdown from "./MessageOptionsDropdown";
-import { base64ToArrayBuffer, decryptWithPrivateKey } from "@/CryptoUtils"; // Import decryptWithPrivateKey
+import { decryptWithPrivateKey } from "@/CryptoUtils";
 
 const MessageItem = ({ message, attachmentClick }) => {
     const currentUser = usePage().props.auth.user.data;

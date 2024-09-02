@@ -21,6 +21,7 @@ const ChatLayout = ({ children }) => {
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
+    const [keyPairGenerated, setKeyPairGenerated] = useState(false);
     const { on, emit } = useEventBus();
 
     const currentUser = page.props.auth.user.data;
@@ -140,7 +141,7 @@ const ChatLayout = ({ children }) => {
                         }
                     })
                 );
-                console.log(decryptedConversations); // Debugging
+
                 setLocalConversations(decryptedConversations);
             } catch (error) {
                 console.error("Failed to decrypt conversations:", error);
@@ -237,28 +238,47 @@ const ChatLayout = ({ children }) => {
 
     useEffect(() => {
         const fetchAndSetKeyPair = async () => {
-            if (!currentUser.public_key) {
-                // Generate key pair and get both public and private keys
-                const { base64PublicKey, base64PrivateKey } = await createKeyPair();
-                setPublicKey(base64PublicKey);
+
+            try {
+                if (keyPairGenerated) return; // Skip if key pair already generated
     
-                // Send both public and private keys to the server
-                const formData = new FormData();
-                formData.append("public_key", base64PublicKey);
-                formData.append("private_key", base64PrivateKey); // Add this line to send the private key
+                if (currentUser && currentUser.public_key) {
+                    // Use the stored public key
+                    const decodedPublicKey = new Uint8Array(
+                        atob(currentUser.public_key).split("").map(c => c.charCodeAt(0))
+                    );
+                    setPublicKey(decodedPublicKey);
+                } else {
+                    const hasKey = await axios.post(route("has.key"));
     
-                await axios.post(route("key.store"), formData);
-            } else {
-                // Use the stored public key
-                const decodedPublicKey = new Uint8Array(
-                    atob(currentUser.public_key).split("").map(c => c.charCodeAt(0))
-                );
-                setPublicKey(decodedPublicKey);
+                    if(hasKey.data.public_key) {
+                        const decodedPublicKey = new Uint8Array(
+                            atob(hasKey.data.public_key).split("").map(c => c.charCodeAt(0))
+                        );
+                        setPublicKey(decodedPublicKey);
+                    } else {
+                        // Generate key pair and get both public and private keys
+                        const { base64PublicKey, base64PrivateKey } = await createKeyPair();
+                        setPublicKey(base64PublicKey);
+                        setKeyPairGenerated(true);
+            
+                        // Send both public and private keys to the server
+                        const formData = new FormData();
+                        formData.append("user_id")
+                        formData.append("public_key", base64PublicKey);
+                        formData.append("private_key", base64PrivateKey);
+            
+                        await axios.post(route("key.store"), formData);
+                    }
+                }  
+            } catch (error) {
+                console.error(error);
+                debugger;              
             }
         };
     
         fetchAndSetKeyPair();
-    }, [currentUser.public_key]);
+    }, [currentUser, keyPairGenerated]);
     
 
     return (

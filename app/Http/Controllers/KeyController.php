@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\HasKeyRequest;
 use App\Http\Requests\RetrieveKeyRequest;
 use App\Http\Requests\StoreKeyRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -38,5 +39,20 @@ class KeyController extends Controller
         $base64PrivateKey = $user->private_key;
 
         return response()->json(['private_key' => $base64PrivateKey]);
+    }
+
+    public function hasKey(HasKeyRequest $request)
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        if(!$user->private_key) {
+            return response()->json(['public_key' => false]);
+        }
+        
+        return response()->json(['public_key' => $user->public_key]);
     }
 }

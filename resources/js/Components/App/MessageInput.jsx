@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PaperClipIcon, PhotoIcon, FaceSmileIcon, HandThumbUpIcon, PaperAirplaneIcon, XCircleIcon, ReceiptPercentIcon, WalletIcon, CreditCardIcon } from "@heroicons/react/24/solid"; // Import WalletIcon
 import NewMessageInput from './NewMessageInput';
 import axios from "axios";
@@ -9,14 +9,13 @@ import AttachmentPreview from "./AttachmentPreview";
 import CustomAudioPlayer from "./CustomAudioPlayer";
 import AudioRecorder from "./AudioRecorder";
 import { useEventBus } from "@/EventBus";
-import { arrayBufferToBase64, createKeyPair, encryptMessageForUsers, encryptWithPublicKey } from "@/CryptoUtils";
+import { encryptWithPublicKey } from "@/CryptoUtils";
 import { usePage } from "@inertiajs/react";
 
 const MessageInput = ({ conversation = null }) => {
     const page = usePage();
     const currentUser = page.props.auth.user.data;
     const [newMessage, setNewMessage] = useState("");
-    const [publicKey, setPublicKey] = useState(null);
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [messageSending, setMessageSending] = useState(false);
     const [chosenFiles, setChosenFiles] = useState([]);

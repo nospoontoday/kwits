@@ -6,7 +6,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { checkAndGenerateKeys, createKeyPair } from '@/CryptoUtils';
+import { createKeyPair } from '@/CryptoUtils';
 
 export default function Login({ status, errorMessage, canResetPassword }) {
     const [publicKey, setPublicKey] = useState(null);
@@ -27,36 +27,7 @@ export default function Login({ status, errorMessage, canResetPassword }) {
         e.preventDefault();
     
         // Post login data to the server
-        post(route('login'), {
-            onSuccess: async (response) => {
-                // If login is successful, proceed to check or generate keys
-                const user = response?.props?.auth?.user;
-                if (user) {
-                    try {
-                        if (!user.public_key) {
-                            // Generate key pair and get both public and private keys
-                            const { base64PublicKey, base64PrivateKey } = await createKeyPair();
-                            setPublicKey(base64PublicKey);
-    
-                            // Send both public and private keys to the server
-                            const formData = new FormData();
-                            formData.append("public_key", base64PublicKey);
-                            formData.append("private_key", base64PrivateKey); // Add this line to send the private key
-    
-                            await axios.post(route("key.store"), formData);
-                        } else {
-                            // Use the stored public key
-                            const decodedPublicKey = new Uint8Array(
-                                atob(user.public_key).split("").map(c => c.charCodeAt(0))
-                            );
-                            setPublicKey(decodedPublicKey);
-                        }
-                    } catch (error) {
-                        console.error('Error handling keys:', error);
-                    }
-                }
-            },
-        });
+        post(route('login'));
     };
     
 

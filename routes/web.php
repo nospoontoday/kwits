@@ -49,6 +49,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
     
     Route::post('/retrieve-private', [KeyController::class, 'retrievePrivateKey'])->name('key.retrieve.private');
 
+    Route::post('/has-key', [KeyController::class, 'hasKey'])->name('has.key');
+
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');
         Route::post('/user/change-role/{user}', [UserController::class, 'changeRole'])->name('user.changeRole');
