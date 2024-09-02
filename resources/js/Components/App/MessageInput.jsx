@@ -330,7 +330,7 @@ const MessageInput = ({ conversation = null }) => {
 
     return (
         <div className="flex flex-wrap items-start border-t border-slate-700 py-3">
-            <div className="order-2 flex-1 xs:flex-none xs:order-1 p-2">
+            <div className="order-2 flex-1 xs:flex-none xs:order-1 p-2 flex flex-wrap xs:flex-nowrap gap-2">
                 <button className="p-1 text-gray-400 hover:text-gray-300 relative">
                     <PaperClipIcon className="w-6" />
                     <input
@@ -355,117 +355,115 @@ const MessageInput = ({ conversation = null }) => {
                         <FaceSmileIcon className="w-6 h-6" />
                     </Popover.Button>
                     <Popover.Panel className="absolute z-10 left-0 bottom-full">
-                        <EmojiPicker theme="dark" onEmojiClick={event => setNewMessage(newMessage + event.emoji)} />
+                        <EmojiPicker theme="dark" onEmojiClick={(event) => setNewMessage(newMessage + event.emoji)} />
                     </Popover.Panel>
                 </Popover>
                 <AudioRecorder fileReady={recordedAudioReady} />
                 {conversation.is_group && (
-                    <div
-                        className="tooltip tooltip-top"
-                        data-tip="Add an expense"
-                    >
-                        <button
-                            onClick={(event) =>
-                                emit(
-                                    "ExpenseModal.show",
-                                    conversation
-                                )
-                            }
-                            className="p-1 text-gray-400 hover:text-gray-300"
-                        >
-                            <ReceiptPercentIcon className="w-6 h-6" />
-                        </button>
-                    </div>
-                )}
-
-            </div>
-            <div className="order-1 px-3 xs:p-0 min-w-[220px] basis-full xs:basis-0 xs:order-2 flex-1 relative">
-                <div className="flex">
-                    <NewMessageInput
-                        value={newMessage}
-                        onSend={onSendClick}
-                        onChange={(ev) => setNewMessage(ev.target.value)}
-                    />
                     <button
-                        onClick={onSendClick}
-                        disabled={messageSending}
-                        className="btn btn-info rounded-1-none"
+                        data-tip="Add an expense"
+                        onClick={(event) => emit("ExpenseModal.show", conversation)}
+                        className="p-1 text-gray-400 hover:text-gray-300 tooltip tooltip-top"
                     >
-                        <PaperAirplaneIcon className="w-6" />
-                        <span className="hidden-sm:inline">Send</span>
+                        <ReceiptPercentIcon className="w-6 h-6" />
                     </button>
-                </div>
-                {uploadProgress > 0 && (
-                    <progress
-                        className="progress progress-info w-full"
-                        value={uploadProgress}
-                        max="100"
-                    />
                 )}
-                {inputErrorMessage && (
-                    <p className="text-xs text-red-400">{inputErrorMessage}</p>
-                )}
-                <div className="flex flex-wrap gap-1 mt-2 yawamotanan">
-                    {chosenFiles.map((file) => (
-                        <div
-                            key={file.file.name}
-                            className={
-                                `relative flex justify-between cursor-pointer ` +
-                                (!isImage(file.file) ? " w-[240px]" : "")
-                            }
-                        >
-                            {isImage(file.file) && (
-                                <img
-                                    src={file.url}
-                                    alt=""
-                                    className="w-16 h-16 object-cover"
-                                />
-                            )}
-
-                            {isAudio(file.file) && (
-                                <CustomAudioPlayer
-                                    file={file}
-                                    showVolume={false}
-                                />
-                            )}
-
-                            {!isAudio(file.file) && !isImage(file.file) && (
-                                <AttachmentPreview file={file} />
-                            )}
-
-                            <button
-                                onClick={() =>
-                                    setChosenFiles(
-                                        chosenFiles.filter(
-                                            (f) =>
-                                                f.file.name !== file.file.name
-                                        )
-                                    )
-                                }
-                                className="absolute w-6 h-6 rounded-full bg-gray-800 -right-2 top-2 text-gray-300 hover:text-gray-100 z-10"
-                            >
-                                <XCircleIcon className="w-6" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className="order-3 xs:order-3 p-2 flex">
                 <button onClick={onLikeClick} className="p-1 text-gray-400 hover:text-gray-300">
                     <HandThumbUpIcon className="w-6 h-6" />
                 </button>
                 {conversation.is_group && (
-                    <button onClick={onYouOweMeClick} className="p-1 text-gray-400 hover:text-gray-300 tooltip tooltip-top" data-tip="Who Owes Me?" >
+                    <button
+                        onClick={onYouOweMeClick}
+                        className="p-1 text-gray-400 hover:text-gray-300 tooltip tooltip-top"
+                        data-tip="Who Owes Me?"
+                    >
                         <WalletIcon className="w-6 h-6" />
                     </button>
                 )}
                 {conversation.is_group && (
-                    <button onClick={onIOweYouClick} className="p-1 text-gray-400 hover:text-gray-300 tooltip tooltip-left" data-tip="Who Do I Owe?">
+                    <button
+                        onClick={onIOweYouClick}
+                        className="p-1 text-gray-400 hover:text-gray-300 tooltip tooltip-top"
+                        data-tip="Who Do I Owe?"
+                    >
                         <CreditCardIcon className="w-6 h-6" />
                     </button>
                 )}
             </div>
+            <div className="order-1 px-3 xs:p-0 min-w-[220px] basis-full xs:basis-0 xs:order-2 flex-1 relative">
+                <div className="flex xs:flex-col">
+                    <div className="flex flex-wrap xs:flex-nowrap gap-2">
+                        <NewMessageInput
+                            value={newMessage}
+                            onSend={onSendClick}
+                            onChange={(ev) => setNewMessage(ev.target.value)}
+                        />
+                        <button
+                            onClick={onSendClick}
+                            disabled={messageSending}
+                            className="btn btn-info rounded-1-none"
+                        >
+                            <PaperAirplaneIcon className="w-6" />
+                            <span className="hidden-sm:inline">Send</span>
+                        </button>
+                    </div>
+                    {uploadProgress > 0 && (
+                        <progress
+                            className="progress progress-info w-full"
+                            value={uploadProgress}
+                            max="100"
+                        />
+                    )}
+                    {inputErrorMessage && (
+                        <p className="text-xs text-red-400">{inputErrorMessage}</p>
+                    )}
+                    <div className="flex flex-wrap gap-1 mt-2 yawamotanan">
+                        {chosenFiles.map((file) => (
+                            <div
+                                key={file.file.name}
+                                className={
+                                    `relative flex justify-between cursor-pointer ` +
+                                    (!isImage(file.file) ? " w-[240px]" : "")
+                                }
+                            >
+                                {isImage(file.file) && (
+                                    <img
+                                        src={file.url}
+                                        alt=""
+                                        className="w-16 h-16 object-cover"
+                                    />
+                                )}
+
+                                {isAudio(file.file) && (
+                                    <CustomAudioPlayer
+                                        file={file}
+                                        showVolume={false}
+                                    />
+                                )}
+
+                                {!isAudio(file.file) && !isImage(file.file) && (
+                                    <AttachmentPreview file={file} />
+                                )}
+
+                                <button
+                                    onClick={() =>
+                                        setChosenFiles(
+                                            chosenFiles.filter(
+                                                (f) => f.file.name !== file.file.name
+                                            )
+                                        )
+                                    }
+                                    className="absolute w-6 h-6 rounded-full bg-gray-800 -right-2 top-2 text-gray-300 hover:text-gray-100 z-10"
+                                >
+                                    <XCircleIcon className="w-6" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
+
     );
 }
 
