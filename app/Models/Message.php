@@ -14,7 +14,7 @@ class Message extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['message', 'sender_id', 'group_id', 'receiver_id', 'type'];
+    protected $fillable = ['message', 'sender_id', 'group_id', 'receiver_id', 'type', 'expense_id'];
 
     public $incrementing = false;
     protected $keyType = 'string';

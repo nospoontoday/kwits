@@ -84,6 +84,7 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                     }
                 }));
 
+                newFormData.append("expense_id", data.expense_id);
                 newFormData.append("message", JSON.stringify(encryptedMessages));
                 newFormData.append("type", "expense");
 

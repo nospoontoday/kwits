@@ -18,6 +18,7 @@ return new class extends Migration
             $table->uuid('conversation_id')->nullable();
             $table->uuid('receiver_id')->nullable();
             $table->longText('message')->nullable();
+            $table->uuid('expense_id')->nullable();
             $table->string('type')->default('text'); // Can be 'text', 'expense', 'info', etc.
             $table->timestamps();
 
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->foreign('conversation_id')->references('id')->on('conversations');
             $table->foreign('sender_id')->references('id')->on('users');
             $table->foreign('receiver_id')->references('id')->on('users');
+            $table->foreign('expense_id')->references('id')->on('expenses');
         });
 
         Schema::table('groups', function (Blueprint $table) {

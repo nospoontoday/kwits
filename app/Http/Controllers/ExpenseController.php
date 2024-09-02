@@ -83,6 +83,7 @@ class ExpenseController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Expense created: {$request->description}, Amount: **{$currencyCode} {$currencySymbol}{$request->amount}**",
+                'expense_id' => $expense->id,
                 'description' => $request->description,
             ]);
 
