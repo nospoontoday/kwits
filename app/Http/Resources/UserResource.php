@@ -15,9 +15,23 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Determine if the avatar is a URL or a path
+        $avatarUrl = $this->avatar;
+
+        if ($avatarUrl) {
+            // Check if the avatar URL is already a full URL
+            if (filter_var($avatarUrl, FILTER_VALIDATE_URL) !== false) {
+                // It's a valid URL, use it directly
+                $avatarUrl = $avatarUrl;
+            } else {
+                // It's a file path, use Storage to get the URL
+                $avatarUrl = Storage::url($avatarUrl);
+            }
+        }
+
         return [
             'id' => $this->id,
-            'avatar_url' => $this->avatar ? Storage::url($this->avatar) : null,
+            'avatar_url' => $avatarUrl,
             'name' => $this->name,
             'email' => $this->email,
             'public_key' => $this->public_key,

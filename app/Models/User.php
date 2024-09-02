@@ -27,6 +27,9 @@ class User extends Authenticatable
         'is_admin',
         'public_key',
         'private_key',
+        'provider',
+        'provider_id',
+        'provider_token',
     ];
 
     protected $hidden = [

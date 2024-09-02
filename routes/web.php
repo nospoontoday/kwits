@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\ProviderController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
@@ -8,9 +9,11 @@ use App\Http\Controllers\KeyController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
+
+Route::get('/auth/{provider}/redirect', [ProviderController::class, 'redirect']);
+
+Route::get('/auth/{provider}/login', [ProviderController::class, 'login']);
 
 Route::middleware(['auth', 'verified', 'active'])->group(function() {
     Route::get('/', [HomeController::class, 'home'])->name('dashboard');
