@@ -17,7 +17,6 @@ const ChatLayout = ({ children }) => {
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState({});
-    const [publicKey, setPublicKey] = useState(null); // State to store the public key
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
@@ -243,23 +242,16 @@ const ChatLayout = ({ children }) => {
                 if (keyPairGenerated) return; // Skip if key pair already generated
     
                 if (currentUser && currentUser.public_key) {
-                    // Use the stored public key
-                    const decodedPublicKey = new Uint8Array(
-                        atob(currentUser.public_key).split("").map(c => c.charCodeAt(0))
-                    );
-                    setPublicKey(decodedPublicKey);
+                    return;
                 } else {
                     const hasKey = await axios.post(route("has.key"));
     
                     if(hasKey.data.public_key) {
-                        const decodedPublicKey = new Uint8Array(
-                            atob(hasKey.data.public_key).split("").map(c => c.charCodeAt(0))
-                        );
-                        setPublicKey(decodedPublicKey);
+                        return;
                     } else {
                         // Generate key pair and get both public and private keys
                         const { base64PublicKey, base64PrivateKey } = await createKeyPair();
-                        setPublicKey(base64PublicKey);
+
                         setKeyPairGenerated(true);
             
                         // Send both public and private keys to the server

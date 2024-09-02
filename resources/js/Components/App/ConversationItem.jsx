@@ -1,4 +1,4 @@
-import {Link, usePage} from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import UserAvatar from "./UserAvatar";
 import GroupAvatar from "./GroupAvatar";
 import UserOptionsDropdown from "./UserOptionsDropdown";
@@ -11,54 +11,34 @@ const ConversationItem = ({
 }) => {
     const page = usePage();
     const currentUser = page.props.auth.user.data;
-    let classes = " border-transparent";
-    if(selectedConversation) {
-        if(!selectedConversation.is_group &&
-            !conversation.is_group &&
-            selectedConversation.id == conversation.id
-        ) {
-            classes = "border-blue-500 bg-black/20";
-        }
 
-        if(selectedConversation.is_group &&
-            conversation.is_group &&
-            selectedConversation.id == conversation.id
-        ) {
-            classes = "border-blue-500 bg-black/20";
-        }
-    }
+    const isSelected = selectedConversation?.id === conversation.id;
+    const isGroup = conversation.is_group;
+    const isUser = conversation.is_user;
+    const isBlocked = isUser && conversation.blocked_at;
+    const isAdmin = currentUser.is_admin;
+
+    const classes = `
+        conversation-item flex items-center gap-2 p-2 text-gray-300 transition-all cursor-pointer border-l-4
+        ${isSelected ? 'border-blue-500 bg-black/20' : 'border-transparent'}
+        ${isUser && isAdmin ? 'pr-2' : 'pr-4'}
+        ${isBlocked ? 'opacity-50' : ''}
+        hover:bg-black/30
+    `;
+
+    const linkRoute = isGroup ? 'chat.group' : 'chat.user';
+
     return (
         <Link
-            href={
-                conversation.is_group
-                    ? route('chat.group', conversation)
-                    : route('chat.user', conversation)
-            }
+            href={route(linkRoute, conversation)}
             preserveState
-            className={
-                "conversation-item flex items-center gap-2 p-2 text-gray-300 transition-all cursor-pointer border-l-4 hover:bg-black/30 " + classes +
-                (conversation.is_user && currentUser.is_admin 
-                    ? " pr-2"
-                    : " pr-4"
-                )
-            }
+            className={classes}
         >
-            {conversation.is_user && (
-                <UserAvatar user={conversation} online={online} />
-            )}
-            {conversation.is_group && <GroupAvatar />}
-            <div
-                className={
-                    `flex-1 text-xs max-w-full overflow-hidden ` +
-                    (conversation.is_user && conversation.blocked_at
-                        ? " opacity-50"
-                        : ""
-                    )
-                }
-            >
-                <div
-                    className="flex gap-1 justify-between items-center"
-                >
+            {isUser && <UserAvatar user={conversation} online={online} />}
+            {isGroup && <GroupAvatar />}
+            
+            <div className="flex-1 text-xs max-w-full overflow-hidden">
+                <div className="flex justify-between items-center gap-1">
                     <h3 className="text-sm font-semibold overflow-hidden text-nowrap text-ellipsis">
                         {conversation.name}
                     </h3>
@@ -69,16 +49,17 @@ const ConversationItem = ({
                     )}
                 </div>
                 {conversation.last_message && (
-                    <p className="text-xs text-nowrap overflow-hidden text-ellipsis">
+                    <p className="text-xs overflow-hidden text-nowrap text-ellipsis">
                         {conversation.last_message}
                     </p>
                 )}
             </div>
-            {!!currentUser.is_admin && conversation.is_user && (
+            
+            {isAdmin && isUser && (
                 <UserOptionsDropdown conversation={conversation} />
             )}
         </Link>
     );
 }
 
-export default ConversationItem
+export default ConversationItem;
