@@ -6,20 +6,28 @@ import { useEventBus } from "@/EventBus";
 
 export default function MessageOptionsDropdown({ message }) {
     const { emit } = useEventBus();
+
     const onMessageDelete = () => {
+        // Check if the message has an expense_id
+        if (message.expense_id) {
+            const confirmDelete = window.confirm("Are you sure you want to delete this expense?");
+            if (!confirmDelete) {
+                return;
+            }
+        }
+
         axios
             .delete(route("message.destroy", message.id))
             .then((res) => {
-                emit("message.deleted", {message, prevMessage: res.data.message});
+                emit("message.deleted", { message, prevMessage: res.data.message });
             })
             .catch((err) => {
                 console.error(err);
-            })
-
-    }
+            });
+    };
 
     return (
-        <div className="absolute right-full text-gray-100 top-1/2 -transate-1/2 z-10">
+        <div className="absolute right-full text-gray-100 top-1/2 -translate-y-1/2 z-10">
             <Menu as="div" className="relative inline-block text-left">
                 <div>
                     <Menu.Button className="flex justify-center items-center w-8 h-8 rounded-full hover:bg-black/40">

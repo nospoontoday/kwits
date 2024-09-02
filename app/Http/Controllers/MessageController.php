@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
+use App\Models\Expense;
+use App\Models\ExpenseMember;
 use App\Models\Message;
 use App\Models\Group;
 use App\Models\MessageAttachment;
@@ -73,6 +75,21 @@ class MessageController extends Controller
         // Ensure the authenticated user is the sender of the message
         if ($message->sender_id !== auth()->id()) {
             return response()->json(['message' => 'Forbidden'], 403);
+        }
+    
+        // Check if the message has an expense_id
+        if ($message->expense_id) {
+            $expense_id = $message->expense_id;
+
+            //set message's expense_id equal to null;
+            $message->expense_id = null;
+            $message->save();
+
+            // First, delete related ExpenseMember records
+            ExpenseMember::where('expense_id', $expense_id)->delete();
+    
+            // Now delete the Expense record
+            Expense::where('id', $expense_id)->delete();
         }
     
         $lastMessage = null;
