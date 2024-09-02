@@ -90,8 +90,6 @@ class Group extends Model
             'updated_at' => $this->updated_at,
             'last_message' => $this->last_message,
             'last_message_date' => $this->last_message_date ? ($this->last_message_date . ' UTC') : null,
-            // 'iv' => $this->last_message_iv,
-            // 'key' => $this->last_message_key,
         ];
     }
 

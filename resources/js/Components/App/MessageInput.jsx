@@ -225,7 +225,7 @@ const MessageInput = ({ conversation = null }) => {
             }));
 
             formData.append("message", JSON.stringify(encryptedMessages));
-
+            formData.append("type", "expense");
             // Send the encrypted message to be stored
             await axios.post(route("message.store"), formData, {
                 onUploadProgress: (progressEvent) => {
@@ -281,7 +281,7 @@ const MessageInput = ({ conversation = null }) => {
             }));
 
             formData.append("message", JSON.stringify(encryptedMessages));
-
+            formData.append("type", "expense");
             // Send the encrypted message to be stored
             await axios.post(route("message.store"), formData, {
                 onUploadProgress: (progressEvent) => {

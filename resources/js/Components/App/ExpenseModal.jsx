@@ -62,6 +62,7 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                 }));
 
                 newFormData.append("message", JSON.stringify(encryptedMessages));
+                newFormData.append("type", "expense");
 
                 // Send the encrypted message to be stored
                 await axios.post(route("message.store"), newFormData);
