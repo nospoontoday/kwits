@@ -64,7 +64,7 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                 newFormData.append("expense_date", formData.expense_date);
                 newFormData.append("split_type", formData.split_type);
                 newFormData.append("user_ids", JSON.stringify(formData.user_ids));
-                newFormData.append("currency", formData.currency); // Append currency to formData
+                newFormData.append("currency", formData.currency);
                 
                 // Send the first request to create the expense and get the owe-me list
                 const { data } = await axios.post(route("expense.store"), newFormData);

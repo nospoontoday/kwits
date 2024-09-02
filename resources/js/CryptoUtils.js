@@ -93,11 +93,6 @@ export async function decryptWithPrivateKey(message, userId) {
         // Extract and decode Base64 encoded encrypted AES key, encrypted message, and IV from the message
         const { encryptedMessage, iv, encryptedAesKey } = message[userId];
 
-        // Log the Base64 strings for debugging
-        console.log('encryptedAesKey:', encryptedAesKey);
-        console.log('encryptedMessage:', encryptedMessage);
-        console.log('iv:', iv);
-
         // Validate and decode Base64 encoded encrypted AES key
         if (!isBase64(encryptedAesKey)) {
             throw new Error('Invalid Base64 encoding for encryptedAesKey');

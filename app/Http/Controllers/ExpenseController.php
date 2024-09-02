@@ -20,14 +20,17 @@ class ExpenseController extends Controller
     public function store(CreateExpenseRequest $request)
     {
         try {
+            $data = $request->validated();
+
             $group = Group::findOrFail($request->group_id);
             $expense = Expense::create([
-                'group_id' => $request->group_id,
+                'group_id' => $data['group_id'],
                 'user_id' => Auth::id(),
-                'description' => $request->description,
-                'amount' => $request->amount,
-                'expense_date' => $request->expense_date,
-                'split_type' => $request->split_type,
+                'description' => $data['description'],
+                'amount' => $data['amount'],
+                'expense_date' => $data['expense_date'],
+                'split_type' => $data['split_type'],
+                'currency' => $data['currency'],
             ]);
 
             switch ($request->split_type) {
