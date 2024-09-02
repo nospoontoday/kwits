@@ -14,6 +14,10 @@ import { encryptWithPublicKey } from "@/CryptoUtils"; // Assuming you have this 
 export default function ExpenseModal({ show = false, onClose = () => {} }) {
     const page = usePage();
     const currentUser = page.props.auth.user.data;
+
+    const [currencies, setCurrencies] = useState([]);
+    const [selectedCurrency, setSelectedCurrency] = useState('');
+
     const { on, emit } = useEventBus();
     const [expense, setExpense] = useState(null);
     const [group, setGroup] = useState({});
@@ -26,8 +30,22 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
         expense_date: new Date().toISOString().split("T")[0],
         split_type: "equally",
         group_id: "",
-        user_ids: []
+        user_ids: [],
+        currency: ''
     });
+
+    const fetchCurrencies = async () => {
+        try {
+            const response = await axios.get('/api/currencies');
+            setCurrencies(response.data);
+        } catch (error) {
+            console.error("Failed to fetch currencies", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchCurrencies();
+    }, []);
 
     const createOrUpdateExpense = async (e) => {
         e.preventDefault();
@@ -46,6 +64,7 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                 newFormData.append("expense_date", formData.expense_date);
                 newFormData.append("split_type", formData.split_type);
                 newFormData.append("user_ids", JSON.stringify(formData.user_ids));
+                newFormData.append("currency", formData.currency); // Append currency to formData
                 
                 // Send the first request to create the expense and get the owe-me list
                 const { data } = await axios.post(route("expense.store"), newFormData);
@@ -57,12 +76,17 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                 await Promise.all(group.users.map(async (user) => {
                     if (user.public_key) {
                         const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
-                        encryptedMessages[user.id] = encrypted;
+                        encryptedMessages[user.id] = {
+                            encryptedMessage: encrypted.encryptedMessage,
+                            iv: encrypted.iv,
+                            encryptedAesKey: encrypted.encryptedAesKey
+                        };
                     }
                 }));
 
                 newFormData.append("message", JSON.stringify(encryptedMessages));
                 newFormData.append("type", "expense");
+
 
                 // Send the encrypted message to be stored
                 await axios.post(route("message.store"), newFormData);
@@ -90,7 +114,8 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
             expense_date: new Date().toISOString().split("T")[0],
             split_type: "equally",
             group_id: "",
-            user_ids: []
+            user_ids: [],
+            currency: ''
         });
         setErrors({});
         onClose();
@@ -99,6 +124,9 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
     useEffect(() => {
         return on("ExpenseModal.show", (data) => {
             if (data.is_group) {
+                setGroup(data);
+                const defaultCurrency = data.default_currency || '';
+                setSelectedCurrency(defaultCurrency); // Set the group's default currency
                 setFormData({
                     group_id: data.id || "",
                     description: "",
@@ -108,17 +136,20 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                     user_ids: data.users
                         .filter((u) => data.owner_id !== u.id)
                         .map((u) => u.id),
+                    currency: defaultCurrency // Set default currency
                 });
-                setGroup(data);
             } else {
                 setExpense(data);
+                const expenseCurrency = data.currency || group.default_currency || '';
+                setSelectedCurrency(expenseCurrency);
                 setFormData({
                     group_id: data.id || "",
                     description: data.description || "",
                     amount: data.amount || "",
                     expense_date: data.expense_date || "",
                     split_type: "equally",
-                    user_ids: []
+                    user_ids: [],
+                    currency: expenseCurrency // Set expense currency
                 });
             }
         });
@@ -154,6 +185,25 @@ export default function ExpenseModal({ show = false, onClose = () => {} }) {
                     />
                     <InputError className="mt-2" message={errors.user_ids} />
                 </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="currency" value="Currency" />
+                    <select
+                        id="currency"
+                        value={formData.currency}
+                        onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                        className="mt-1 block"
+                        required
+                    >
+                        {currencies.map((currency) => (
+                            <option key={currency.code} value={currency.code}>
+                                <span>{currency.code.toUpperCase()}</span>
+                            </option>
+                        ))}
+                    </select>
+                    <InputError className="mt-2" message={errors.currency} />
+                </div>
+
 
                 <div className="mt-4">
                     <InputLabel htmlFor="description" value="Description" />

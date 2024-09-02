@@ -18,6 +18,7 @@ class GroupResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
+            'default_currency' => $this->default_currency,
             'owner' => new UserResource($this->owner),
             'users' => UserResource::collection($this->members),
         ];

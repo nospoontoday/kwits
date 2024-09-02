@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->longText('description')->nullable();
             $table->uuid('owner_id');
+            $table->string('default_currency')->default('php');
             $table->foreign('owner_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });

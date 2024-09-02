@@ -6,6 +6,7 @@ use App\Events\SocketMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\CreateExpenseRequest;
 use App\Http\Resources\MessageResource;
+use App\Models\Currency;
 use App\Models\Message;
 use App\Models\Expense;
 use App\Models\ExpenseMember;
@@ -70,24 +71,15 @@ class ExpenseController extends Controller
                     break;
             }
 
-            // Store the expense in the chat log as well
-            // $message = Message::create([
-            //     'id' => (string) Str::uuid(),
-            //     'group_id' => $group->id,
-            //     'sender_id' => Auth::id(),
-            //     'message' => "Expense created: {$request->description}, Amount: {$request->amount}",
-            //     'type' => 'expense',
-            // ]);
+            
 
-            // if($group) {
-            //     Group::updateGroupWithMessage($group->id, $message);
-            // }
-
-            // SocketMessage::dispatch($message);
+            $currency = Currency::where('code', $request->currency)->first();
+            $currencyCode = strtoupper($request->currency);
+            $currencySymbol = strtoupper($currency->symbol);
 
             return response()->json([
                 'success' => true,
-                'message' => "Expense created: {$request->description}, Amount: {$request->amount}",
+                'message' => "Expense created: {$request->description}, Amount: **{$currencyCode} {$currencySymbol}{$request->amount}**",
                 'description' => $request->description,
             ]);
 

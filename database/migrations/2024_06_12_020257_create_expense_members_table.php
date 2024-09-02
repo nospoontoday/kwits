@@ -13,6 +13,7 @@ return new class extends Migration
             $table->uuid('expense_id');
             $table->uuid('user_id');
             $table->decimal('amount', 10, 2);
+            $table->decimal('amount_in_default_currency')->nullable();
             $table->timestamps();
 
             $table->foreign('expense_id')->references('id')->on('expenses')->onDelete('cascade');

@@ -19,6 +19,7 @@ class CreateExpenseRequest extends FormRequest
             'group_id' => 'required|exists:groups,id',
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0.01',
+            'currency' => 'required',
             'expense_date' => 'required|date',
             'split_type' => 'required|in:equally,exact,single_payer,full_amount_each',
             'exact_amounts' => 'required_if:split_type,exact|array',

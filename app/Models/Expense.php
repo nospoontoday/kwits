@@ -12,7 +12,7 @@ class Expense extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['id', 'group_id', 'user_id', 'description', 'amount', 'expense_date', 'split_type'];
+    protected $fillable = ['id', 'group_id', 'user_id', 'description', 'amount', 'expense_date', 'split_type', 'currency'];
 
     public $incrementing = false; // Disable auto-incrementing
     protected $keyType = 'string'; // Set the primary key type to string

@@ -144,7 +144,6 @@ const ChatLayout = ({ children }) => {
                 setLocalConversations(decryptedConversations);
             } catch (error) {
                 console.error("Failed to decrypt conversations:", error);
-                debugger;
             }
         };
     
@@ -264,8 +263,7 @@ const ChatLayout = ({ children }) => {
                     }
                 }  
             } catch (error) {
-                console.error(error);
-                debugger;              
+                console.error(error);           
             }
         };
     

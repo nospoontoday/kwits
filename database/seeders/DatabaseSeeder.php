@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Conversation;
+use App\Models\Currency;
 use App\Models\Group;
 use App\Models\Message;
 use App\Models\User;
@@ -45,6 +46,40 @@ class DatabaseSeeder extends Seeder
             $randomUsers = User::inRandomOrder()->limit(rand(2, 5))->pluck('id')->toArray();
             $groupMembers = array_unique(array_merge([$owner->id], $randomUsers));
             $group->members()->attach($groupMembers);
+        }
+
+        $currencies = [
+            ['code' => 'usd', 'symbol' => '$'],
+            ['code' => 'eur', 'symbol' => '€'],
+            ['code' => 'gbp', 'symbol' => '£'],
+            ['code' => 'jpy', 'symbol' => '¥'],
+            ['code' => 'aud', 'symbol' => 'A$'],
+            ['code' => 'cad', 'symbol' => 'C$'],
+            ['code' => 'chf', 'symbol' => 'CHF'],
+            ['code' => 'cny', 'symbol' => '¥'],
+            ['code' => 'sek', 'symbol' => 'kr'],
+            ['code' => 'nzd', 'symbol' => 'NZ$'],
+            ['code' => 'mxn', 'symbol' => '$'],
+            ['code' => 'sgd', 'symbol' => 'S$'],
+            ['code' => 'hkd', 'symbol' => 'HK$'],
+            ['code' => 'krw', 'symbol' => '₩'],
+            ['code' => 'inr', 'symbol' => '₹'],
+            ['code' => 'brl', 'symbol' => 'R$'],
+            ['code' => 'zar', 'symbol' => 'R'],
+            ['code' => 'rub', 'symbol' => '₽'],
+            ['code' => 'try', 'symbol' => '₺'],
+            ['code' => 'dkk', 'symbol' => 'kr'],
+            ['code' => 'nok', 'symbol' => 'kr'],
+            ['code' => 'myr', 'symbol' => 'RM'],
+            ['code' => 'idr', 'symbol' => 'Rp'],
+            ['code' => 'thb', 'symbol' => '฿'],
+            ['code' => 'php', 'symbol' => '₱'],
+            ['code' => 'twd', 'symbol' => 'NT$'],
+            ['code' => 'kzt', 'symbol' => '₸'],
+        ];
+
+        foreach ($currencies as $currency) {
+            Currency::updateOrCreate(['code' => $currency['code']], ['symbol' => $currency['symbol']]);
         }
 
         // Create 1000 messages

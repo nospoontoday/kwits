@@ -62,19 +62,32 @@ const MessageInput = ({ conversation = null }) => {
                     await Promise.all(users.map(async (user) => {
                         if (user.public_key) {
                             const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
-                            encryptedMessages[user.id] = encrypted;
+                            encryptedMessages[user.id] = {
+                                encryptedMessage: encrypted.encryptedMessage,
+                                iv: encrypted.iv,
+                                encryptedAesKey: encrypted.encryptedAesKey
+                            };
                         }
                     }));
 
                     // Assuming your backend can handle an array of encrypted messages for each recipient
                     formData.append("message", JSON.stringify(encryptedMessages));
+
                 } else if (conversation.is_user) {
                     // Encrypt the message for a single recipient
                     const encryptedReceiver = await encryptWithPublicKey(conversation.public_key, newMessage);
-                    encryptedMessages[conversation.id] = encryptedReceiver;
+                    encryptedMessages[conversation.id] = {
+                        encryptedMessage: encryptedReceiver.encryptedMessage,
+                        iv: encryptedReceiver.iv,
+                        encryptedAesKey: encryptedReceiver.encryptedAesKey
+                    };
 
                     const encryptedSender = await encryptWithPublicKey(currentUser.public_key, newMessage);
-                    encryptedMessages[currentUser.id] = encryptedSender;
+                    encryptedMessages[currentUser.id] = {
+                        encryptedMessage: encryptedSender.encryptedMessage,
+                        iv: encryptedSender.iv,
+                        encryptedAesKey: encryptedSender.encryptedAesKey
+                    }
 
                     formData.append("message", JSON.stringify(encryptedMessages));
                     formData.append("receiver_id", conversation.id);
@@ -131,7 +144,11 @@ const MessageInput = ({ conversation = null }) => {
                 await Promise.all(users.map(async (user) => {
                     if (user.public_key) {
                         const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
-                        encryptedMessages[user.id] = encrypted;
+                        encryptedMessages[user.id] = {
+                            encryptedMessage: encrypted.encryptedMessage,
+                            iv: encrypted.iv,
+                            encryptedAesKey: encrypted.encryptedAesKey
+                        };
                     }
                 }));
 
@@ -140,25 +157,22 @@ const MessageInput = ({ conversation = null }) => {
             } else if (conversation.is_user) {
                 // Encrypt the message for a single recipient
                 const encryptedReceiver = await encryptWithPublicKey(conversation.public_key, newMessage);
-                encryptedMessages[conversation.id] = encryptedReceiver;
+                encryptedMessages[conversation.id] = {
+                    encryptedMessage: encryptedReceiver.encryptedMessage,
+                    iv: encryptedReceiver.iv,
+                    encryptedAesKey: encryptedReceiver.encryptedAesKey
+                };
 
                 const encryptedSender = await encryptWithPublicKey(currentUser.public_key, newMessage);
-                encryptedMessages[currentUser.id] = encryptedSender;
+                encryptedMessages[currentUser.id] = {
+                    encryptedMessage: encryptedSender.encryptedMessage,
+                    iv: encryptedSender.iv,
+                    encryptedAesKey: encryptedSender.encryptedAesKey
+                }
 
                 formData.append("message", JSON.stringify(encryptedMessages));
                 formData.append("receiver_id", conversation.id);
             }
-
-            const arr = new Uint8Array(12);
-            const iv = window.crypto.getRandomValues(arr);
-            const cryptoKey = await window.crypto.subtle.generateKey(
-                {
-                    name: 'AES-GCM',
-                    length: 128,
-                },
-                true,
-                ["encrypt", "decrypt"]
-            );
         
             if (conversation.is_group) {
                 formData.append("group_id", conversation.id);
@@ -220,7 +234,11 @@ const MessageInput = ({ conversation = null }) => {
             await Promise.all(users.map(async (user) => {
                 if (user.public_key) {
                     const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
-                    encryptedMessages[user.id] = encrypted;
+                    encryptedMessages[user.id] = {
+                        encryptedMessage: encrypted.encryptedMessage,
+                        iv: encrypted.iv,
+                        encryptedAesKey: encrypted.encryptedAesKey
+                    };
                 }
             }));
 
@@ -276,7 +294,11 @@ const MessageInput = ({ conversation = null }) => {
             await Promise.all(users.map(async (user) => {
                 if (user.public_key) {
                     const encrypted = await encryptWithPublicKey(user.public_key, newMessage);
-                    encryptedMessages[user.id] = encrypted;
+                    encryptedMessages[user.id] = {
+                        encryptedMessage: encrypted.encryptedMessage,
+                        iv: encrypted.iv,
+                        encryptedAesKey: encrypted.encryptedAesKey
+                    };
                 }
             }));
 

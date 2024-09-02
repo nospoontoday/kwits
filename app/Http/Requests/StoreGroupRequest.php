@@ -26,6 +26,7 @@ class StoreGroupRequest extends FormRequest
                 }),
             ],
             'description' => ['nullable', 'string'],
+            'default_currency' => 'required',
             'user_ids' => ['nullable', 'array'],
             'user_ids.*' => ['string', 'exists:users,id'],
         ];

@@ -17,6 +17,7 @@ use App\Http\Requests\UpdateGroupRequest;
 use App\Jobs\DeleteGroupJob;
 use App\Models\Message;
 use App\Models\Contact;
+use App\Models\Currency;
 use Illuminate\Support\Facades\Request;
 
 class GroupController extends Controller
@@ -103,82 +104,116 @@ class GroupController extends Controller
     {
         $data = $request->validated();
         $groupId = $data['group_id'];
-
+    
         $group = Group::with(['members', 'expenses.members', 'payments'])
             ->findOrFail($groupId);
-
+    
         $userId = Auth::id();
         $balances = [];
-
-        // Initialize balances for each member
+    
+        // Fetch currencies
+        $currencies = Currency::all()->keyBy('code'); // Assuming Currency is the model for the currencies table
+    
+        // Initialize balances for each member, separated by currency
         foreach ($group->members as $member) {
             if ($member->id !== $userId) {
-                $balances[$member->id] = 0;
+                // Initialize balances for each currency
+                foreach ($currencies as $currencyCode => $currency) {
+                    $balances[$currencyCode][$member->id] = [
+                        'amount' => 0,
+                        'currency_symbol' => $currency->symbol,
+                    ];
+                }
             }
         }
-
+    
         // Calculate the debts for expenses
         foreach ($group->expenses as $expense) {
+            $currencyCode = $expense->currency;
+            $currencySymbol = $currencies->get($currencyCode)->symbol;
+    
             foreach ($expense->members as $expenseMember) {
                 if ($expense->user_id === $userId) {
                     // If the logged-in user created the expense, others owe them
-                    if (isset($balances[$expenseMember->user_id])) {
-                        $balances[$expenseMember->user_id] += $expenseMember->amount;
+                    if (isset($balances[$currencyCode][$expenseMember->user_id])) {
+                        $balances[$currencyCode][$expenseMember->user_id]['amount'] += $expenseMember->amount;
+                        $balances[$currencyCode][$expenseMember->user_id]['currency_symbol'] = $currencySymbol;
                     }
                 } elseif ($expenseMember->user_id === $userId) {
                     // If the logged-in user is part of the expense, they owe the creator
-                    if (isset($balances[$expense->user_id])) {
-                        $balances[$expense->user_id] -= $expenseMember->amount;
+                    if (isset($balances[$currencyCode][$expense->user_id])) {
+                        $balances[$currencyCode][$expense->user_id]['amount'] -= $expenseMember->amount;
+                        $balances[$currencyCode][$expense->user_id]['currency_symbol'] = $currencySymbol;
                     }
                 }
             }
         }
-        
+    
         // Calculate the payments
         foreach ($group->payments as $payment) {
-
+            $currencyCode = $payment->currency_code;
+            $currencySymbol = $currencies->get($currencyCode)->symbol;
+    
             if ($payment->payer_id === $userId) {
                 // If the logged-in user created the payment, they owe more
-
-                if (isset($balances[$payment->payee_id])) {
-                    $balances[$payment->payee_id] += $payment->amount;
+                if (isset($balances[$currencyCode][$payment->payee_id])) {
+                    $balances[$currencyCode][$payment->payee_id]['amount'] += $payment->amount;
+                    $balances[$currencyCode][$payment->payee_id]['currency_symbol'] = $currencySymbol;
                 }
             } elseif ($payment->payee_id === $userId) {
-                // If the logged-in user received the payment, tthey owe less
-
-                if (isset($balances[$payment->payer_id])) {
-                    $balances[$payment->payer_id] -= $payment->amount;
+                // If the logged-in user received the payment, they owe less
+                if (isset($balances[$currencyCode][$payment->payer_id])) {
+                    $balances[$currencyCode][$payment->payer_id]['amount'] -= $payment->amount;
+                    $balances[$currencyCode][$payment->payer_id]['currency_symbol'] = $currencySymbol;
                 }
             }
         }
-
-        // Prepare the result
-        $oweMe = [];
-        foreach ($balances as $memberId => $balance) {
-            if ($balance > 0) {
-                $oweMe[] = [
-                    'user_id' => $memberId,
-                    'name' => $group->members->firstWhere('id', $memberId)->name,
-                    'amount' => $balance,
-                ];
+    
+        // Group by currency
+        $groupedByCurrency = [];
+        foreach ($balances as $currencyCode => $members) {
+            foreach ($members as $memberId => $data) {
+                if ($data['amount'] > 0) {
+                    if (!isset($groupedByCurrency[$currencyCode])) {
+                        $groupedByCurrency[$currencyCode] = [
+                            'symbol' => $data['currency_symbol'],
+                            'amounts' => [],
+                        ];
+                    }
+                    
+                    $groupedByCurrency[$currencyCode]['amounts'][$memberId] = [
+                        'name' => $group->members->firstWhere('id', $memberId)->name,
+                        'amount' => $data['amount'],
+                    ];
+                }
             }
         }
-
-        // Serialize the oweMe list into a readable format
-        $oweMeList = collect($oweMe)->map(function ($item) {
-            return "{$item['name']} owes you {$item['amount']}";
-        })->implode(', ');
-
+    
+        // Serialize the oweMe list into Markdown-friendly format
+        $oweMeList = '';
+        foreach ($groupedByCurrency as $currencyCode => $data) {
+            $currencySymbol = $data['symbol'];
+            $amounts = $data['amounts'];
+        
+            $oweMeList .= "### Currency: {$currencySymbol} ({$currencyCode})\n";
+            foreach ($amounts as $memberId => $amountData) {
+                $amountFormatted = number_format($amountData['amount'], 2); // Format amount with 2 decimal places
+                $oweMeList .= "- **{$amountData['name']}** owes you **{$currencySymbol}{$amountFormatted}**\n";
+            }
+            $oweMeList .= "\n";
+        }
+        
         if (empty($oweMeList)) {
             $oweMeList = "No one owes you anything.";
         }
-
+        
         return response()->json([
             'success' => true,
-            'message' => "You owe me list: $oweMeList",
-            'data' => $oweMe,
+            'message' => "You owe me list:\n\n" . $oweMeList,
+            'data' => $groupedByCurrency,
         ]);
-    }
+        
+    }    
 
     public function getOweYouList(StoreOweYouRequest $request)
     {

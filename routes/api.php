@@ -6,8 +6,11 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\CurrencyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/currencies', [CurrencyController::class, 'index']);
 
 Route::get('/user', function (Request $request) {
     return $request->user();

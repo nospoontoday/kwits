@@ -11,7 +11,7 @@ class Group extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['name', 'owner_id', 'description', 'last_message_id'];
+    protected $fillable = ['name', 'owner_id', 'description', 'last_message_id', 'default_currency'];
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -81,6 +81,7 @@ class Group extends Model
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
+            'default_currency' => $this->default_currency,
             'is_user' => false,
             'is_group' => true,
             'owner_id' => $this->owner_id,

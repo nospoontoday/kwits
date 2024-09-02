@@ -14,6 +14,9 @@ return new class extends Migration
             $table->uuid('user_id'); // The user who created the expense
             $table->string('description');
             $table->decimal('amount', 10, 2);
+            $table->string('currency')->default('php');
+            $table->decimal('conversion_rate', 10, 2)->nullable();
+            $table->decimal('amount_in_default_currency')->nullable();
             $table->date('expense_date');
             $table->enum('split_type', ['equally', 'exact', 'single_payer', 'full_amount_each'])->default('equally');
             $table->timestamps();
