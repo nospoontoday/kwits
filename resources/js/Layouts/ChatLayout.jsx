@@ -264,7 +264,7 @@ const ChatLayout = ({ children }) => {
             
                         // Send both public and private keys to the server
                         const formData = new FormData();
-                        formData.append("user_id")
+
                         formData.append("public_key", base64PublicKey);
                         formData.append("private_key", base64PrivateKey);
             
