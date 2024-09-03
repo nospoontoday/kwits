@@ -192,10 +192,12 @@ class GroupController extends Controller
         // Serialize the oweMe list into Markdown-friendly format
         $oweMeList = '';
         foreach ($groupedByCurrency as $currencyCode => $data) {
+            $currencyCodeUpper = strtoupper($currencyCode);
+
             $currencySymbol = $data['symbol'];
             $amounts = $data['amounts'];
         
-            $oweMeList .= "### Currency: {$currencySymbol} ({$currencyCode})\n";
+            $oweMeList .= "### Currency: {$currencySymbol} ({$currencyCodeUpper})\n";
             foreach ($amounts as $memberId => $amountData) {
                 $amountFormatted = number_format($amountData['amount'], 2); // Format amount with 2 decimal places
                 $oweMeList .= "- **{$amountData['name']}** owes you **{$currencySymbol}{$amountFormatted}**\n";
@@ -307,10 +309,11 @@ class GroupController extends Controller
         // Serialize the oweYou list into Markdown-friendly format
         $oweYouList = '';
         foreach ($groupedByCurrency as $currencyCode => $data) {
+            $currencyCodeUpper = strtoupper($currencyCode);
             $currencySymbol = $data['symbol'];
             $amounts = $data['amounts'];
     
-            $oweYouList .= "### Currency: {$currencySymbol} ({$currencyCode})\n";
+            $oweYouList .= "### Currency: {$currencySymbol} ({$currencyCodeUpper})\n";
             foreach ($amounts as $memberId => $amountData) {
                 $amountFormatted = number_format($amountData['amount'], 2); // Format amount with 2 decimal places
                 $oweYouList .= "- **You owe {$amountData['name']}** **{$currencySymbol}{$amountFormatted}**\n";

@@ -17,6 +17,8 @@ class KeyController extends Controller
         $user = Auth::user();
         $user->public_key = $data['public_key'];
         $user->private_key = $data['private_key'];
+        $user->salt = $data['salt'];
+        $user->iv = $data['iv'];
         $user->save();
 
         // Return a response or redirect

@@ -39,7 +39,9 @@ const ChatLayout = ({ children }) => {
                         try {
                             const decryptedLastMessage = await decryptWithPrivateKey(
                                 JSON.parse(conversation.last_message),
-                                currentUser.id
+                                currentUser.id,
+                                currentUser.iv,
+                                currentUser.salt,
                             );
                             return {
                                 ...conversation,
@@ -69,7 +71,9 @@ const ChatLayout = ({ children }) => {
     const updateLastMessage = async (conversations, message) => {
         const decryptedMessage = await decryptWithPrivateKey(
             JSON.parse(message.message),
-            currentUser.id
+            currentUser.id,
+            currentUser.iv,
+            currentUser.salt,
         );
 
         return conversations.map((conversation) => {
@@ -127,7 +131,9 @@ const ChatLayout = ({ children }) => {
                         try {
                             const decryptedLastMessage = await decryptWithPrivateKey(
                                 JSON.parse(conversation.last_message),
-                                currentUser.id
+                                currentUser.id,
+                                currentUser.iv,
+                                currentUser.salt,
                             );
     
                             return {

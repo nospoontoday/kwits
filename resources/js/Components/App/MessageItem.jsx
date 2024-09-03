@@ -15,7 +15,7 @@ const MessageItem = ({ message, attachmentClick }) => {
         async function decryptMessage() {
             try {
                 // Decrypt the message based on the user's ID
-                const decrypted = await decryptWithPrivateKey(JSON.parse(message.message), currentUser.id);
+                const decrypted = await decryptWithPrivateKey(JSON.parse(message.message), currentUser.id, currentUser.iv, currentUser.salt);
                 setDecryptedMessage(decrypted);
             } catch (error) {
                 console.error("Failed to decrypt message:", error);

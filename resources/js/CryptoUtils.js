@@ -10,7 +10,33 @@ export async function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-export async function createKeyPair() {
+// Utility function to derive a key from a PIN
+async function deriveKey(pin, salt) {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(pin),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+    );
+
+    return crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['encrypt', 'decrypt']
+    );
+}
+
+
+export async function createKeyPair(pin) {
     const keyPair = await window.crypto.subtle.generateKey(
         {
             name: "RSA-OAEP",
@@ -28,28 +54,92 @@ export async function createKeyPair() {
 
     // Export the private key
     const privateKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
-    const privateKeyBytes = new Uint8Array(privateKeyBuffer);
-    const base64PrivateKey = btoa(String.fromCharCode(...privateKeyBytes));
+    const base64PrivateKey = btoa(String.fromCharCode(...new Uint8Array(privateKeyBuffer)));
 
-    secureStorage.setItem("privateKey", base64PrivateKey);
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const base64Salt = await arrayBufferToBase64(salt);
+
+    // Derive a key from PIN
+    const derivedKey = await deriveKey(pin, salt);
+
+    // Encrypt the private key
+    const { encryptedPrivateKey, iv } = await encryptPrivateKey(derivedKey, base64PrivateKey);
+
+    // Decrypt the private key for testing
+    const decryptedBase64PrivateKey = await decryptPrivateKey(derivedKey, encryptedPrivateKey, iv);
+    
+    // Ensure the original and decrypted private keys match
+    if (decryptedBase64PrivateKey === base64PrivateKey) {
+        console.log("Private key encryption/decryption successful.");
+    } else {
+        console.error("Private key encryption/decryption failed.");
+    }
+
+    // Store the encrypted private key and IV securely
+    secureStorage.setItem("encryptedPrivateKey", encryptedPrivateKey);
 
     return {
-        base64PublicKey,  // Send this to the server
-        base64PrivateKey, // This will be securely stored locally
+        base64PublicKey,
+        iv,
+        encryptedPrivateKey,
+        base64Salt,
     };
 }
 
-export async function arrayBufferToBase64(buffer) {
-    // Create a Uint8Array from the ArrayBuffer
-    const uint8Array = new Uint8Array(buffer);
-    
-    // Create a binary string from the Uint8Array
-    const binaryString = String.fromCharCode.apply(null, uint8Array);
-    
-    // Convert binary string to Base64
-    return btoa(binaryString);
+
+// Encrypt private key using a derived key
+async function encryptPrivateKey(key, base64PrivateKey) {
+    const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization vector
+    const encoder = new TextEncoder();
+    const data = encoder.encode(base64PrivateKey); // Convert to bytes for encryption
+    const encryptedPrivateKey = await crypto.subtle.encrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv
+        },
+        key,
+        data
+    );
+
+    return {
+        encryptedPrivateKey: await arrayBufferToBase64(encryptedPrivateKey),
+        iv: await arrayBufferToBase64(iv)
+    };
 }
 
+
+async function decryptPrivateKey(key, encryptedPrivateKeyBase64, ivBase64) {
+    try {
+        // Decode Base64 strings to binary
+        const encryptedPrivateKey = await base64ToArrayBuffer(encryptedPrivateKeyBase64);
+        const iv = await base64ToArrayBuffer(ivBase64);
+
+        // Decrypt the data using the derived key and IV
+        const decryptedData = await crypto.subtle.decrypt(
+            {
+                name: 'AES-GCM',
+                iv: new Uint8Array(iv)
+            },
+            key,
+            new Uint8Array(encryptedPrivateKey)
+        );
+
+        const decoder = new TextDecoder();
+        return decoder.decode(decryptedData); // Convert bytes back to string
+    } catch (e) {
+        console.error('Decryption error:', e);
+        throw new Error('Decryption failed');
+    }
+}
+
+
+
+
+export async function arrayBufferToBase64(buffer) {
+    const uint8Array = new Uint8Array(buffer);
+    const binaryString = String.fromCharCode(...uint8Array);
+    return btoa(binaryString);
+}
 
 const requestPrivateKey = async (userId) => {
     
@@ -59,34 +149,44 @@ const requestPrivateKey = async (userId) => {
     
     const base64PrivateKey = response.data.private_key;
 
-    secureStorage.setItem("privateKey", base64PrivateKey);
+    secureStorage.setItem("encryptedPrivateKey", base64PrivateKey);
 };
-
-export async function decryptWithPrivateKey(message, userId) {
-
+export async function decryptWithPrivateKey(message, userId, ivBase64, saltBase64) {
     try {
         // Retrieve the private key from secure storage
-        const storedPrivateKey = secureStorage.getItem("privateKey");
+        let storedEncryptedPrivateKey = secureStorage.getItem("encryptedPrivateKey");
 
-        if (!storedPrivateKey) {
+        if (!storedEncryptedPrivateKey || (typeof storedEncryptedPrivateKey === 'object' && Object.keys(storedEncryptedPrivateKey).length === 0)) {
             await requestPrivateKey(userId);
 
             // Verify if the private key is stored after requesting
-            if (!secureStorage.getItem("privateKey")) {
-                throw new Error("Private key not found");
+            storedEncryptedPrivateKey = secureStorage.getItem("encryptedPrivateKey");
+            if (!storedEncryptedPrivateKey || (typeof storedEncryptedPrivateKey === 'object' && Object.keys(storedEncryptedPrivateKey).length === 0)) {
+                throw new Error("Private key not found after requesting");
             }
         }
 
-        // Decode the Base64 encoded private key
-        const privateKeyBinary = Uint8Array.from(atob(storedPrivateKey), c => c.charCodeAt(0)).buffer;
+        // Convert Base64-encoded salt to ArrayBuffer
+        const salt = await base64ToArrayBuffer(saltBase64);
 
-        // Import the private key
-        const privateKey = await window.crypto.subtle.importKey(
-            "pkcs8",
-            privateKeyBinary,
-            { name: "RSA-OAEP", hash: "SHA-256" },
-            false,
-            ["decrypt"]
+        // Derive the key from PIN and salt
+        const derivedKey = await deriveKey("1234", salt);
+
+        // Decrypt the private key using the derived key
+        const decryptedPrivateKeyBase64 = await decryptPrivateKey(derivedKey, storedEncryptedPrivateKey, ivBase64);
+
+        const privateKeyArrayBuffer = Uint8Array.from(atob(decryptedPrivateKeyBase64), c => c.charCodeAt(0)).buffer;
+        
+        // Import the private key as a CryptoKey object
+        const privateKey = await crypto.subtle.importKey(
+            'pkcs8', // Private key format
+            privateKeyArrayBuffer,
+            {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+            },
+            true, // Whether the key is extractable
+            ['decrypt'] // Key usages
         );
 
         // Extract and decode Base64 encoded encrypted AES key, encrypted message, and IV from the message
@@ -96,19 +196,19 @@ export async function decryptWithPrivateKey(message, userId) {
         if (!isBase64(encryptedAesKey)) {
             throw new Error('Invalid Base64 encoding for encryptedAesKey');
         }
-        const encryptedAesKeyBuffer = Uint8Array.from(atob(encryptedAesKey), c => c.charCodeAt(0)).buffer;
+        const encryptedAesKeyBuffer = await base64ToArrayBuffer(encryptedAesKey);
 
         // Validate and decode Base64 encoded encrypted message
         if (!isBase64(encryptedMessage)) {
             throw new Error('Invalid Base64 encoding for encryptedMessage');
         }
-        const encryptedMessageBuffer = Uint8Array.from(atob(encryptedMessage), c => c.charCodeAt(0)).buffer;
+        const encryptedMessageBuffer = await base64ToArrayBuffer(encryptedMessage);
 
         // Validate and decode Base64 encoded IV
         if (!isBase64(iv)) {
             throw new Error('Invalid Base64 encoding for iv');
         }
-        const ivArray = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
+        const ivArray = new Uint8Array(await base64ToArrayBuffer(iv));
 
         // Decrypt the AES key using the private key
         const aesKeyBuffer = await window.crypto.subtle.decrypt(
@@ -146,14 +246,12 @@ export async function decryptWithPrivateKey(message, userId) {
     }
 }
 
+
 // Utility function to check if a string is Base64 encoded
 function isBase64(str) {
     const base64Pattern = /^(?:[A-Z0-9+\/]{4}){1,}(?:[A-Z0-9+\/]{2}==|[A-Z0-9+\/]{3}=)?$/i;
     return base64Pattern.test(str);
 }
-
-
-
 
 export async function encryptWithPublicKey(base64PublicKey, message) {
     try {

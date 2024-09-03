@@ -27,6 +27,8 @@ class User extends Authenticatable
         'is_admin',
         'public_key',
         'private_key',
+        'iv',
+        'salt',
         'provider',
         'provider_id',
         'provider_token',
@@ -146,10 +148,6 @@ class User extends Authenticatable
     
         return $query->get();
     }
-    
-
-
-
 
     public function toConversationArray()
     {
@@ -175,6 +173,8 @@ class User extends Authenticatable
             'is_user' => true,
             'is_admin' => (bool) $this->is_admin,
             'public_key' => $this->public_key,
+            'iv' => $this->iv,
+            'salt' => $this->salt,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'blocked_at' => $this->blocked_at,

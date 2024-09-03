@@ -21,6 +21,8 @@ return new class extends Migration
             $table->rememberToken();
             $table->longText('public_key')->nullable();
             $table->longText('private_key')->nullable();
+            $table->string('iv')->nullable();
+            $table->string('salt')->nullable();
             $table->boolean('is_admin')->default(false);
             $table->timestamp('blocked_at')->nullable();
             $table->string('provider')->nullable();

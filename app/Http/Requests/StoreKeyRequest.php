@@ -24,6 +24,8 @@ class StoreKeyRequest extends FormRequest
         return [
             'public_key' => 'required|string',
             'private_key' => 'required|string',
+            'iv' => 'required|string',
+            'salt' => 'required|string',
         ];
     }
 }
