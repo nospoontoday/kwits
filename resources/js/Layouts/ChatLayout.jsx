@@ -9,6 +9,8 @@ import { PencilSquareIcon, UsersIcon } from "@heroicons/react/24/solid";
 import { router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 import axios from "axios"; // Make sure axios is imported
+import PinModal from "@/Components/App/PinModal";
+import secureStorage from 'react-secure-storage';
 
 const ChatLayout = ({ children }) => {
     const page = usePage();
@@ -18,6 +20,7 @@ const ChatLayout = ({ children }) => {
     const [sortedConversations, setSortedConversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState({});
     const [showGroupModal, setShowGroupModal] = useState(false);
+    const [showPinModal, setShowPinModal] = useState(false);
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
     const [keyPairGenerated, setKeyPairGenerated] = useState(false);
@@ -37,11 +40,20 @@ const ChatLayout = ({ children }) => {
                             return conversation;
                         }
                         try {
+                            // check pin availability
+                            let storedPin = secureStorage.getItem("pin");
+
+                            if (!storedPin || (typeof storedPin === 'object' && Object.keys(storedPin).length === 0)) {
+                                setShowPinModal(true, "decrypt");
+                                storedPin = secureStorage.getItem("pin");
+                            }
+
                             const decryptedLastMessage = await decryptWithPrivateKey(
                                 JSON.parse(conversation.last_message),
                                 currentUser.id,
                                 currentUser.iv,
                                 currentUser.salt,
+                                storedPin
                             );
                             return {
                                 ...conversation,
@@ -67,13 +79,36 @@ const ChatLayout = ({ children }) => {
         await decryptConversations();
     };
     
+    const handlePinSubmit = async (pin) => {
+        // Generate key pair and get both public and private keys
+        const { base64PublicKey, encryptedPrivateKey, iv, base64Salt } = await createKeyPair(pin);
+        setKeyPairGenerated(true);
+
+        // Send both public and private keys to the server
+        const formData = new FormData();
+
+        formData.append("public_key", base64PublicKey);
+        formData.append("private_key", encryptedPrivateKey);
+        formData.append("iv", iv);
+        formData.append("salt", base64Salt);
+        await axios.post(route("key.store"), formData);
+    }
 
     const updateLastMessage = async (conversations, message) => {
+        // check pin availability
+        let storedPin = secureStorage.getItem("pin");
+
+        if (!storedPin || (typeof storedPin === 'object' && Object.keys(storedPin).length === 0)) {
+            setShowPinModal(true, "decrypt");
+            storedPin = secureStorage.getItem("pin");
+        }
+
         const decryptedMessage = await decryptWithPrivateKey(
             JSON.parse(message.message),
             currentUser.id,
             currentUser.iv,
             currentUser.salt,
+            storedPin
         );
 
         return conversations.map((conversation) => {
@@ -129,11 +164,20 @@ const ChatLayout = ({ children }) => {
                             return conversation;
                         }
                         try {
+                            // check pin availability
+                            let storedPin = secureStorage.getItem("pin");
+
+                            if (!storedPin || (typeof storedPin === 'object' && Object.keys(storedPin).length === 0)) {
+                                setShowPinModal(true, "decrypt");
+                                storedPin = secureStorage.getItem("pin");
+                            }
+
                             const decryptedLastMessage = await decryptWithPrivateKey(
                                 JSON.parse(conversation.last_message),
                                 currentUser.id,
                                 currentUser.iv,
                                 currentUser.salt,
+                                storedPin
                             );
     
                             return {
@@ -254,19 +298,7 @@ const ChatLayout = ({ children }) => {
                     if(hasKey.data.public_key) {
                         return;
                     } else {
-                        
-                        // Generate key pair and get both public and private keys
-                        const { base64PublicKey, encryptedPrivateKey, iv, base64Salt } = await createKeyPair("1234");
-                        setKeyPairGenerated(true);
-            
-                        // Send both public and private keys to the server
-                        const formData = new FormData();
-
-                        formData.append("public_key", base64PublicKey);
-                        formData.append("private_key", encryptedPrivateKey);
-                        formData.append("iv", iv);
-                        formData.append("salt", base64Salt);
-                        await axios.post(route("key.store"), formData);
+                        setShowPinModal(true);
                     }
                 }  
             } catch (error) {
@@ -335,6 +367,7 @@ const ChatLayout = ({ children }) => {
             <GroupModal show={showGroupModal} onClose={() => setShowGroupModal(false)} />
             <ExpenseModal show={showExpenseModal} onClose={() => setShowExpenseModal(false)} />
             <FriendRequestModal show={showFriendRequestModal} onClose={() => setShowFriendRequestModal(false)} />
+            <PinModal show={showPinModal} onClose={() => setShowPinModal(false)} onSubmit={handlePinSubmit} />
         </>
     );
 };

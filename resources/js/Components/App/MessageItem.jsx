@@ -6,16 +6,31 @@ import { formatMessageDateLong } from '@/helpers';
 import MessageAttachments from "./MessageAttachments";
 import MessageOptionsDropdown from "./MessageOptionsDropdown";
 import { decryptWithPrivateKey } from "@/CryptoUtils";
+import secureStorage from 'react-secure-storage';
+import PinModal from "./PinModal";
 
 const MessageItem = ({ message, attachmentClick }) => {
     const currentUser = usePage().props.auth.user.data;
     const [decryptedMessage, setDecryptedMessage] = useState("Decrypting...");
+    const [showPinModal, setShowPinModal] = useState(false);
+
+    const handlePinSubmit = async (pin) => {
+        secureStorage.setItem("pin", pin);
+    }
 
     useEffect(() => {
         async function decryptMessage() {
             try {
+                // check pin availability
+                let storedPin = secureStorage.getItem("pin");
+
+                if (!storedPin || (typeof storedPin === 'object' && Object.keys(storedPin).length === 0)) {
+                    setShowPinModal(true, "decrypt");
+                    storedPin = secureStorage.getItem("pin");
+                }
+
                 // Decrypt the message based on the user's ID
-                const decrypted = await decryptWithPrivateKey(JSON.parse(message.message), currentUser.id, currentUser.iv, currentUser.salt);
+                const decrypted = await decryptWithPrivateKey(JSON.parse(message.message), currentUser.id, currentUser.iv, currentUser.salt, storedPin);
                 setDecryptedMessage(decrypted);
             } catch (error) {
                 console.error("Failed to decrypt message:", error);
@@ -73,6 +88,7 @@ const MessageItem = ({ message, attachmentClick }) => {
                     />
                 </div>
             </div>
+            <PinModal show={showPinModal} onClose={() => setShowPinModal(false)} onSubmit={handlePinSubmit} />
         </div>
     );
 }

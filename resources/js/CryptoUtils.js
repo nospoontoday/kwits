@@ -148,7 +148,7 @@ const requestPrivateKey = async (userId) => {
 
     secureStorage.setItem("encryptedPrivateKey", base64PrivateKey);
 };
-export async function decryptWithPrivateKey(message, userId, ivBase64, saltBase64) {
+export async function decryptWithPrivateKey(message, userId, ivBase64, saltBase64, pin) {
     try {
         // Retrieve the private key from secure storage
         let storedEncryptedPrivateKey = secureStorage.getItem("encryptedPrivateKey");
@@ -167,7 +167,7 @@ export async function decryptWithPrivateKey(message, userId, ivBase64, saltBase6
         const salt = await base64ToArrayBuffer(saltBase64);
 
         // Derive the key from PIN and salt
-        const derivedKey = await deriveKey("1234", salt);
+        const derivedKey = await deriveKey(pin, salt);
 
         // Decrypt the private key using the derived key
         const decryptedPrivateKeyBase64 = await decryptPrivateKey(derivedKey, storedEncryptedPrivateKey, ivBase64);
