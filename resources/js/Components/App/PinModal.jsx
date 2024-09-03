@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-const PinModal = ({ show, mode = "encrypt", onClose, onSubmit }) => {
+const PinModal = ({ show, onClose, onSubmit, mode = "encrypt" }) => {
     const [pin, setPin] = useState('');
     const [error, setError] = useState('');
 
@@ -13,15 +13,28 @@ const PinModal = ({ show, mode = "encrypt", onClose, onSubmit }) => {
         }
     };
 
+    const renderMessage = () => {
+        if (mode === "encrypt") {
+            return (
+                <p className="mb-4 text-sm text-gray-600">
+                    Remember your PIN! It’s crucial for accessing encrypted messages. We don't store it, so if you forget it, you lose access forever. Keep it safe and write it down!
+                </p>
+            );
+        } else if (mode === "decrypt") {
+            return (
+                <p className="mb-4 text-sm text-gray-600">
+                    Enter your PIN to decrypt your encrypted messages.
+                </p>
+            );
+        }
+    };
+
     return (
         show ? (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                 <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
                     <h2 className="text-lg font-semibold mb-4">Enter PIN</h2>
-                    <p className="mb-4 text-sm text-gray-600">
-                        Remember your PIN! If you forget it, you won't be able to read old messages or send new ones as they are encrypted. 
-                        The PIN must be numeric and between 4 to 6 digits.
-                    </p>
+                    {renderMessage()}
                     <input
                         type="password"
                         value={pin}

@@ -21,6 +21,7 @@ const ChatLayout = ({ children }) => {
     const [onlineUsers, setOnlineUsers] = useState({});
     const [showGroupModal, setShowGroupModal] = useState(false);
     const [showPinModal, setShowPinModal] = useState(false);
+    const [pinModalMode, setPinModalMode] = useState(null);
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [showFriendRequestModal, setShowFriendRequestModal] = useState(false);
     const [keyPairGenerated, setKeyPairGenerated] = useState(false);
@@ -122,11 +123,10 @@ const ChatLayout = ({ children }) => {
 
     const updateLastMessage = async (conversations, message) => {
         // check pin availability
-        let encryptedPin = secureStorage.getItem("encryptedPin");
+        const encryptedPin = secureStorage.getItem("encryptedPin");
 
         if (!encryptedPin || (typeof encryptedPin === 'object' && Object.keys(encryptedPin).length === 0)) {
-            setShowPinModal(true, "decrypt");
-            encryptedPin = secureStorage.getItem("encryptedPin");
+            throw new Error('Decryption failed');
         }
         const salt = await base64ToArrayBuffer(currentUser.salt);
         const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
@@ -195,11 +195,10 @@ const ChatLayout = ({ children }) => {
                         }
                         try {
                             // check pin availability
-                            let encryptedPin = secureStorage.getItem("encryptedPin");
+                            const encryptedPin = secureStorage.getItem("encryptedPin");
 
                             if (!encryptedPin || (typeof encryptedPin === 'object' && Object.keys(encryptedPin).length === 0)) {
-                                setShowPinModal(true, "decrypt");
-                                encryptedPin = secureStorage.getItem("encryptedPin");
+                                throw new Error('Decryption failed');
                             }
                             const salt = await base64ToArrayBuffer(currentUser.salt);
                             const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
@@ -326,15 +325,24 @@ const ChatLayout = ({ children }) => {
             
             try {
                 if (keyPairGenerated) return; // Skip if key pair already generated
-                
+                const encryptedPin = secureStorage.getItem("encryptedPin");
+
                 if (currentUser && currentUser.public_key) {
-                    return;
+                    if (!encryptedPin || (typeof encryptedPin === 'object' && Object.keys(encryptedPin).length === 0)) {
+                        setPinModalMode("decrypt");
+                        setShowPinModal(true);
+
+                    };
                 } else {
                     const hasKey = await axios.post(route("has.key"));
 
                     if(hasKey.data.public_key) {
-                        return;
+                        if (!encryptedPin || (typeof encryptedPin === 'object' && Object.keys(encryptedPin).length === 0)) {
+                            setPinModalMode("decrypt");
+                            setShowPinModal(true);
+                        };
                     } else {
+                        setPinModalMode();
                         setShowPinModal(true);
                     }
                 }  
@@ -404,7 +412,7 @@ const ChatLayout = ({ children }) => {
             <GroupModal show={showGroupModal} onClose={() => setShowGroupModal(false)} />
             <ExpenseModal show={showExpenseModal} onClose={() => setShowExpenseModal(false)} />
             <FriendRequestModal show={showFriendRequestModal} onClose={() => setShowFriendRequestModal(false)} />
-            <PinModal show={showPinModal} onClose={() => setShowPinModal(false)} onSubmit={handlePinSubmit} />
+            <PinModal show={showPinModal} onClose={() => setShowPinModal(false)} onSubmit={handlePinSubmit} mode={pinModalMode} />
         </>
     );
 };
