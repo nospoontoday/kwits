@@ -242,34 +242,35 @@ const ChatLayout = ({ children }) => {
 
     useEffect(() => {
         const fetchAndSetKeyPair = async () => {
-
+            
             try {
                 if (keyPairGenerated) return; // Skip if key pair already generated
-    
+                
                 if (currentUser && currentUser.public_key) {
                     return;
                 } else {
                     const hasKey = await axios.post(route("has.key"));
-    
+
                     if(hasKey.data.public_key) {
                         return;
                     } else {
+                        
                         // Generate key pair and get both public and private keys
-                        const { base64PublicKey, base64PrivateKey } = await createKeyPair("1234");
-
+                        const { base64PublicKey, encryptedPrivateKey, iv, base64Salt } = await createKeyPair("1234");
                         setKeyPairGenerated(true);
             
                         // Send both public and private keys to the server
                         const formData = new FormData();
 
                         formData.append("public_key", base64PublicKey);
-                        formData.append("private_key", base64PrivateKey);
-            
+                        formData.append("private_key", encryptedPrivateKey);
+                        formData.append("iv", iv);
+                        formData.append("salt", base64Salt);
                         await axios.post(route("key.store"), formData);
                     }
                 }  
             } catch (error) {
-                console.error(error);           
+                console.error(error);         
             }
         };
     
