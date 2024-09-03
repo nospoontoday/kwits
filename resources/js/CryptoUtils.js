@@ -112,24 +112,6 @@ export async function encryptPrivateKey(key, base64PrivateKey) {
     };
 }
 
-
-async function decryptPin(key, encryptedPin, iv) {
-    const encryptedPinBuffer = await base64ToArrayBuffer(encryptedPin);
-    const ivBuffer = await base64ToArrayBuffer(iv);
-
-    const decryptedBuffer = await crypto.subtle.decrypt(
-        {
-            name: 'AES-GCM',
-            iv: ivBuffer
-        },
-        key,
-        encryptedPinBuffer
-    );
-
-    const decoder = new TextDecoder();
-    return decoder.decode(decryptedBuffer);
-}
-
 export async function decryptPrivateKey(key, encryptedPrivateKeyBase64, ivBase64) {
     try {
         // Decode Base64 strings to binary
@@ -170,6 +152,7 @@ const requestPrivateKey = async (userId) => {
 
     secureStorage.setItem("encryptedPrivateKey", base64PrivateKey);
 };
+
 export async function decryptWithPrivateKey(message, userId, ivBase64, saltBase64, pin) {
     try {
         // Retrieve the private key from secure storage
@@ -265,26 +248,6 @@ export async function decryptWithPrivateKey(message, userId, ivBase64, saltBase6
     }
 }
 
-async function encryptPin(pin, encryptionKey) {
-    const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Generate a random IV
-    const encodedPin = new TextEncoder().encode(pin); // Convert PIN to bytes
-
-    const encryptedBuffer = await window.crypto.subtle.encrypt(
-        {
-            name: 'AES-GCM',
-            iv: iv,
-        },
-        encryptionKey,
-        encodedPin
-    );
-
-    return {
-        iv: await arrayBufferToBase64(iv), // Convert IV to Base64
-        encryptedPin: await arrayBufferToBase64(encryptedBuffer) // Convert encrypted PIN to Base64
-    };
-}
-
-
 // Utility function to check if a string is Base64 encoded
 function isBase64(str) {
     const base64Pattern = /^(?:[A-Z0-9+\/]{4}){1,}(?:[A-Z0-9+\/]{2}==|[A-Z0-9+\/]{3}=)?$/i;
@@ -352,25 +315,4 @@ export async function encryptWithPublicKey(base64PublicKey, message) {
         console.error('Encryption error:', error);
         throw new Error('Encryption failed');
     }
-}
-
-// Import a public key from Base64
-export async function importPublicKey(publicKeyBase64) {
-    // Convert Base64 public key to ArrayBuffer
-    const publicKeyBuffer = await base64ToArrayBuffer(publicKeyBase64);
-
-    // Parse the public key Buffer as JWK
-    const jwkKey = JSON.parse(new TextDecoder().decode(publicKeyBuffer));
-
-    // Import the public key using Web Crypto API
-    return window.crypto.subtle.importKey(
-        'jwk',
-        jwkKey,
-        {
-            name: 'RSA-OAEP',
-            hash: 'SHA-256'
-        },
-        true,
-        ['encrypt']
-    );
 }

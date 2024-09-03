@@ -14,18 +14,6 @@ const MessageItem = ({ message, attachmentClick }) => {
     const [decryptedMessage, setDecryptedMessage] = useState("Decrypting...");
     const [showPinModal, setShowPinModal] = useState(false);
 
-    const handlePinSubmit = async (pin) => {
-        console.log(pin);
-        debugger;
-        const salt = await base64ToArrayBuffer(currentUser.salt);
-        const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
-
-        // Encrypt the pin
-        const { encryptedPrivateKey: encryptedPin } = await encryptPrivateKey(derivedPinKey, pin);
-
-        secureStorage.setItem("encryptedPin", encryptedPin);
-    }
-
     useEffect(() => {
         async function decryptMessage() {
             try {
