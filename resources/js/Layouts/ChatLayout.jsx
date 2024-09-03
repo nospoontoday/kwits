@@ -64,7 +64,10 @@ const ChatLayout = ({ children }) => {
                             };
                         } catch (error) {
                             console.error("Failed to decrypt message: ", error);
-                            return conversation; // Return the original conversation if decryption fails
+                            return {
+                                ...conversation,
+                                last_message: "Decryption failed",
+                            };
                         }
                     })
                 );
@@ -210,14 +213,17 @@ const ChatLayout = ({ children }) => {
                                 currentUser.salt,
                                 storedPin
                             );
-    
+                            console.log("decryptConversations", decryptedLastMessage);
                             return {
                                 ...conversation,
                                 last_message: decryptedLastMessage,
                             };
                         } catch (error) {
                             console.error("Failed to decrypt message:", error);
-                            return conversation;
+                            return {
+                                ...conversation,
+                                last_message: "Decryption failed",
+                            };
                         }
                     })
                 );
