@@ -255,7 +255,7 @@ const ChatLayout = ({ children }) => {
                         return;
                     } else {
                         // Generate key pair and get both public and private keys
-                        const { base64PublicKey, base64PrivateKey } = await createKeyPair();
+                        const { base64PublicKey, base64PrivateKey } = await createKeyPair("1234");
 
                         setKeyPairGenerated(true);
             

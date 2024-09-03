@@ -132,9 +132,6 @@ async function decryptPrivateKey(key, encryptedPrivateKeyBase64, ivBase64) {
     }
 }
 
-
-
-
 export async function arrayBufferToBase64(buffer) {
     const uint8Array = new Uint8Array(buffer);
     const binaryString = String.fromCharCode(...uint8Array);
