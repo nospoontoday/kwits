@@ -5,7 +5,7 @@ import UserAvatar from "./UserAvatar";
 import { formatMessageDateLong } from '@/helpers';
 import MessageAttachments from "./MessageAttachments";
 import MessageOptionsDropdown from "./MessageOptionsDropdown";
-import { decryptWithPrivateKey } from "@/CryptoUtils";
+import { base64ToArrayBuffer, decryptPrivateKey, decryptWithPrivateKey, deriveKey, encryptPrivateKey } from "@/CryptoUtils";
 import secureStorage from 'react-secure-storage';
 import PinModal from "./PinModal";
 
@@ -15,19 +15,28 @@ const MessageItem = ({ message, attachmentClick }) => {
     const [showPinModal, setShowPinModal] = useState(false);
 
     const handlePinSubmit = async (pin) => {
-        secureStorage.setItem("pin", pin);
+        const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
+
+        // Encrypt the pin
+        const { encryptedPrivateKey: encryptedPin } = await encryptPrivateKey(derivedPinKey, pin);
+
+        secureStorage.setItem("encryptedPin", encryptedPin);
     }
 
     useEffect(() => {
         async function decryptMessage() {
             try {
                 // check pin availability
-                let storedPin = secureStorage.getItem("pin");
+                const encryptedPin = secureStorage.getItem("encryptedPin");
 
-                if (!storedPin || (typeof storedPin === 'object' && Object.keys(storedPin).length === 0)) {
+                if (!encryptedPin || (typeof encryptedPin === 'object' && Object.keys(encryptedPin).length === 0)) {
                     setShowPinModal(true, "decrypt");
-                    storedPin = secureStorage.getItem("pin");
+                    encryptedPin = secureStorage.getItem("encryptedPin");
                 }
+                const salt = await base64ToArrayBuffer(currentUser.salt);
+                const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
+
+                const storedPin = await decryptPrivateKey(derivedPinKey, encryptedPin, currentUser.pin_iv);
 
                 // Decrypt the message based on the user's ID
                 const decrypted = await decryptWithPrivateKey(JSON.parse(message.message), currentUser.id, currentUser.iv, currentUser.salt, storedPin);

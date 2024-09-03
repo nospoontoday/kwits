@@ -3,7 +3,7 @@ import ExpenseModal from "@/Components/App/ExpenseModal";
 import FriendRequestModal from "@/Components/App/FriendRequestModal";
 import GroupModal from "@/Components/App/GroupModal";
 import TextInput from "@/Components/TextInput";
-import { createKeyPair, decryptWithPrivateKey } from "@/CryptoUtils"; // Import decryptWithPrivateKey
+import { base64ToArrayBuffer, createKeyPair, decryptPrivateKey, decryptWithPrivateKey, deriveKey } from "@/CryptoUtils"; // Import decryptWithPrivateKey
 import { useEventBus } from "@/EventBus";
 import { PencilSquareIcon, UsersIcon } from "@heroicons/react/24/solid";
 import { router, usePage } from "@inertiajs/react";
@@ -41,12 +41,16 @@ const ChatLayout = ({ children }) => {
                         }
                         try {
                             // check pin availability
-                            let storedPin = secureStorage.getItem("pin");
+                            const encryptedPin = secureStorage.getItem("encryptedPin");
 
-                            if (!storedPin || (typeof storedPin === 'object' && Object.keys(storedPin).length === 0)) {
+                            if (!encryptedPin || (typeof encryptedPin === 'object' && Object.keys(encryptedPin).length === 0)) {
                                 setShowPinModal(true, "decrypt");
-                                storedPin = secureStorage.getItem("pin");
+                                encryptedPin = secureStorage.getItem("encryptedPin");
                             }
+            
+                            const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
+            
+                            const storedPin = await decryptPrivateKey(derivedPinKey, encryptedPin, currentUser.pin_iv);
 
                             const decryptedLastMessage = await decryptWithPrivateKey(
                                 JSON.parse(conversation.last_message),
@@ -81,7 +85,7 @@ const ChatLayout = ({ children }) => {
     
     const handlePinSubmit = async (pin) => {
         // Generate key pair and get both public and private keys
-        const { base64PublicKey, encryptedPrivateKey, iv, base64Salt } = await createKeyPair(pin);
+        const { base64PublicKey, encryptedPrivateKey, iv, base64Salt, pinIv } = await createKeyPair(pin);
         setKeyPairGenerated(true);
 
         // Send both public and private keys to the server
@@ -90,18 +94,23 @@ const ChatLayout = ({ children }) => {
         formData.append("public_key", base64PublicKey);
         formData.append("private_key", encryptedPrivateKey);
         formData.append("iv", iv);
+        formData.append("pin_iv", pinIv);
         formData.append("salt", base64Salt);
         await axios.post(route("key.store"), formData);
     }
 
     const updateLastMessage = async (conversations, message) => {
         // check pin availability
-        let storedPin = secureStorage.getItem("pin");
+        const encryptedPin = secureStorage.getItem("encryptedPin");
 
-        if (!storedPin || (typeof storedPin === 'object' && Object.keys(storedPin).length === 0)) {
+        if (!encryptedPin || (typeof encryptedPin === 'object' && Object.keys(encryptedPin).length === 0)) {
             setShowPinModal(true, "decrypt");
-            storedPin = secureStorage.getItem("pin");
+            encryptedPin = secureStorage.getItem("encryptedPin");
         }
+        const salt = await base64ToArrayBuffer(currentUser.salt);
+        const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
+
+        const storedPin = await decryptPrivateKey(derivedPinKey, encryptedPin, currentUser.pin_iv);
 
         const decryptedMessage = await decryptWithPrivateKey(
             JSON.parse(message.message),
@@ -165,12 +174,16 @@ const ChatLayout = ({ children }) => {
                         }
                         try {
                             // check pin availability
-                            let storedPin = secureStorage.getItem("pin");
+                            const encryptedPin = secureStorage.getItem("encryptedPin");
 
-                            if (!storedPin || (typeof storedPin === 'object' && Object.keys(storedPin).length === 0)) {
+                            if (!encryptedPin || (typeof encryptedPin === 'object' && Object.keys(encryptedPin).length === 0)) {
                                 setShowPinModal(true, "decrypt");
-                                storedPin = secureStorage.getItem("pin");
+                                encryptedPin = secureStorage.getItem("encryptedPin");
                             }
+                            const salt = await base64ToArrayBuffer(currentUser.salt);
+                            const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
+            
+                            const storedPin = await decryptPrivateKey(derivedPinKey, encryptedPin, currentUser.pin_iv);
 
                             const decryptedLastMessage = await decryptWithPrivateKey(
                                 JSON.parse(conversation.last_message),

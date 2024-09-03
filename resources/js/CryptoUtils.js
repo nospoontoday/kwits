@@ -11,7 +11,7 @@ export async function base64ToArrayBuffer(base64) {
 }
 
 // Utility function to derive a key from a PIN
-async function deriveKey(pin, salt) {
+export async function deriveKey(pin, salt) {
     const encoder = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
         'raw',
@@ -37,58 +37,60 @@ async function deriveKey(pin, salt) {
 
 
 export async function createKeyPair(pin) {
-    const keyPair = await window.crypto.subtle.generateKey(
-        {
-            name: "RSA-OAEP",
-            modulusLength: 2048,
-            publicExponent: new Uint8Array([1, 0, 1]),
-            hash: { name: "SHA-256" },
-        },
-        true, // Key is extractable
-        ["encrypt", "decrypt"]
-    );
-
-    const publicKeyBuffer = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
-    const publicKeyBytes = new Uint8Array(publicKeyBuffer);
-    const base64PublicKey = btoa(String.fromCharCode(...publicKeyBytes));
-
-    // Export the private key
-    const privateKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
-    const base64PrivateKey = btoa(String.fromCharCode(...new Uint8Array(privateKeyBuffer)));
-
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const base64Salt = await arrayBufferToBase64(salt);
-
-    // Derive a key from PIN
-    const derivedKey = await deriveKey(pin, salt);
-
-    // Encrypt the private key
-    const { encryptedPrivateKey, iv } = await encryptPrivateKey(derivedKey, base64PrivateKey);
-
-    // Decrypt the private key for testing
-    const decryptedBase64PrivateKey = await decryptPrivateKey(derivedKey, encryptedPrivateKey, iv);
+    try {
+        const keyPair = await window.crypto.subtle.generateKey(
+            {
+                name: "RSA-OAEP",
+                modulusLength: 2048,
+                publicExponent: new Uint8Array([1, 0, 1]),
+                hash: { name: "SHA-256" },
+            },
+            true, // Key is extractable
+            ["encrypt", "decrypt"]
+        );
     
-    // Ensure the original and decrypted private keys match
-    if (decryptedBase64PrivateKey === base64PrivateKey) {
-        console.log("Private key encryption/decryption successful.");
-    } else {
-        console.error("Private key encryption/decryption failed.");
+        const publicKeyBuffer = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+        const publicKeyBytes = new Uint8Array(publicKeyBuffer);
+        const base64PublicKey = btoa(String.fromCharCode(...publicKeyBytes));
+    
+        // Export the private key
+        const privateKeyBuffer = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
+        const base64PrivateKey = btoa(String.fromCharCode(...new Uint8Array(privateKeyBuffer)));
+    
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const base64Salt = await arrayBufferToBase64(salt);
+    
+        // Derive a key from PIN
+        const derivedKey = await deriveKey(pin, salt);
+
+        // Derive a key from Master Key
+        const derivedPinKey = await deriveKey(import.meta.env.VITE_MASTER_KEY, salt);
+    
+        // Encrypt the private key
+        const { encryptedPrivateKey, iv } = await encryptPrivateKey(derivedKey, base64PrivateKey);
+    
+        // Encrypt the pin
+        const { encryptedPrivateKey: encryptedPin, iv: pinIv } = await encryptPrivateKey(derivedPinKey, pin);
+
+        // Store the encrypted private key and IV securely
+        secureStorage.setItem("encryptedPrivateKey", encryptedPrivateKey);
+        secureStorage.setItem("encryptedPin", encryptedPin);
+    
+        return {
+            base64PublicKey,
+            iv,
+            encryptedPrivateKey,
+            base64Salt,
+            pinIv,
+        };   
+    } catch (error) {
+        console.error(error);
     }
-
-    // Store the encrypted private key and IV securely
-    secureStorage.setItem("encryptedPrivateKey", encryptedPrivateKey);
-
-    return {
-        base64PublicKey,
-        iv,
-        encryptedPrivateKey,
-        base64Salt,
-    };
 }
 
 
 // Encrypt private key using a derived key
-async function encryptPrivateKey(key, base64PrivateKey) {
+export async function encryptPrivateKey(key, base64PrivateKey) {
     const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization vector
     const encoder = new TextEncoder();
     const data = encoder.encode(base64PrivateKey); // Convert to bytes for encryption
@@ -108,7 +110,24 @@ async function encryptPrivateKey(key, base64PrivateKey) {
 }
 
 
-async function decryptPrivateKey(key, encryptedPrivateKeyBase64, ivBase64) {
+async function decryptPin(key, encryptedPin, iv) {
+    const encryptedPinBuffer = await base64ToArrayBuffer(encryptedPin);
+    const ivBuffer = await base64ToArrayBuffer(iv);
+
+    const decryptedBuffer = await crypto.subtle.decrypt(
+        {
+            name: 'AES-GCM',
+            iv: ivBuffer
+        },
+        key,
+        encryptedPinBuffer
+    );
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decryptedBuffer);
+}
+
+export async function decryptPrivateKey(key, encryptedPrivateKeyBase64, ivBase64) {
     try {
         // Decode Base64 strings to binary
         const encryptedPrivateKey = await base64ToArrayBuffer(encryptedPrivateKeyBase64);
@@ -241,6 +260,25 @@ export async function decryptWithPrivateKey(message, userId, ivBase64, saltBase6
         console.error('Decryption error:', error);
         throw new Error('Decryption failed');
     }
+}
+
+async function encryptPin(pin, encryptionKey) {
+    const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Generate a random IV
+    const encodedPin = new TextEncoder().encode(pin); // Convert PIN to bytes
+
+    const encryptedBuffer = await window.crypto.subtle.encrypt(
+        {
+            name: 'AES-GCM',
+            iv: iv,
+        },
+        encryptionKey,
+        encodedPin
+    );
+
+    return {
+        iv: await arrayBufferToBase64(iv), // Convert IV to Base64
+        encryptedPin: await arrayBufferToBase64(encryptedBuffer) // Convert encrypted PIN to Base64
+    };
 }
 
 
