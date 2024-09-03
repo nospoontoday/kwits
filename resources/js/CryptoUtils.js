@@ -31,8 +31,7 @@ export async function createKeyPair() {
     const privateKeyBytes = new Uint8Array(privateKeyBuffer);
     const base64PrivateKey = btoa(String.fromCharCode(...privateKeyBytes));
 
-    // Securely store the private key
-    await securelyStorePrivateKey(privateKeyBytes);
+    secureStorage.setItem("privateKey", base64PrivateKey);
 
     return {
         base64PublicKey,  // Send this to the server
@@ -217,14 +216,6 @@ export async function encryptWithPublicKey(base64PublicKey, message) {
         console.error('Encryption error:', error);
         throw new Error('Encryption failed');
     }
-}
-
-
-export async function securelyStorePrivateKey(privateKeyBytes) {
-    // Example implementation: storing Base64 encoded string
-    const base64PrivateKey = btoa(String.fromCharCode(...privateKeyBytes));
-    // Use a secure storage method appropriate for your environment
-    secureStorage.setItem("privateKey", base64PrivateKey);
 }
 
 // Import a public key from Base64
