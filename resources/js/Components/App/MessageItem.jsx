@@ -7,12 +7,10 @@ import MessageAttachments from "./MessageAttachments";
 import MessageOptionsDropdown from "./MessageOptionsDropdown";
 import { base64ToArrayBuffer, decryptPrivateKey, decryptWithPrivateKey, deriveKey, encryptPrivateKey } from "@/CryptoUtils";
 import secureStorage from 'react-secure-storage';
-import PinModal from "./PinModal";
 
 const MessageItem = ({ message, attachmentClick }) => {
     const currentUser = usePage().props.auth.user.data;
     const [decryptedMessage, setDecryptedMessage] = useState("Decrypting...");
-    const [showPinModal, setShowPinModal] = useState(false);
 
     useEffect(() => {
         async function decryptMessage() {
@@ -93,7 +91,6 @@ const MessageItem = ({ message, attachmentClick }) => {
                     />
                 </div>
             </div>
-            <PinModal show={showPinModal} onClose={() => setShowPinModal(false)} onSubmit={handlePinSubmit} />
         </div>
     );
 }
