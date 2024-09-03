@@ -54,6 +54,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
 
     Route::post('/has-key', [KeyController::class, 'hasKey'])->name('has.key');
 
+    Route::put('/key/{user}', [KeyController::class, 'update'])->name('key.update');
+
+
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');
         Route::post('/user/change-role/{user}', [UserController::class, 'changeRole'])->name('user.changeRole');

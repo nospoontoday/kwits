@@ -72,6 +72,9 @@ export async function createKeyPair(pin) {
         // Encrypt the pin
         const { encryptedPrivateKey: encryptedPin, iv: pinIv } = await encryptPrivateKey(derivedPinKey, pin);
 
+        // For testing
+        const decryptedPin = await decryptPrivateKey(derivedPinKey, encryptedPin, pinIv);
+
         // Store the encrypted private key and IV securely
         secureStorage.setItem("encryptedPrivateKey", encryptedPrivateKey);
         secureStorage.setItem("encryptedPin", encryptedPin);

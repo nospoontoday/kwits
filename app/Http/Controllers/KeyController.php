@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\HasKeyRequest;
 use App\Http\Requests\RetrieveKeyRequest;
 use App\Http\Requests\StoreKeyRequest;
+use App\Http\Requests\UpdateKeyRequest;
+use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,10 +22,20 @@ class KeyController extends Controller
         $user->salt = $data['salt'];
         $user->iv = $data['iv'];
         $user->pin_iv = $data['pin_iv'];
+        $user->has_created_pin = $data['has_created_pin'];
         $user->save();
 
         // Return a response or redirect
         return response()->json(['message' => 'Public & Private keys saved successfully'], 200);
+    }
+
+    public function update(UpdateKeyRequest $request, User $user)
+    {
+        $data = $request->validated();
+
+        $user->update($data);
+
+        return redirect()->back();
     }
 
     public function retrievePrivateKey(RetrieveKeyRequest $request)

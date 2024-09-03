@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('pin_iv')->nullable();
             $table->string('salt')->nullable();
             $table->boolean('is_admin')->default(false);
+            $table->boolean('has_created_pin')->default(false);
             $table->timestamp('blocked_at')->nullable();
             $table->string('provider')->nullable();
             $table->string('provider_id')->nullable();

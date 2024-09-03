@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreKeyRequest extends FormRequest
+class UpdateKeyRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,12 +22,7 @@ class StoreKeyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'public_key' => 'required|string',
-            'private_key' => 'required|string',
-            'iv' => 'required|string',
             'pin_iv' => 'required|string',
-            'salt' => 'required|string',
-            'has_created_pin' => 'required|boolean',
         ];
     }
 }
