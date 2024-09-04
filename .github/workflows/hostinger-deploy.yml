@@ -39,6 +39,9 @@ jobs:
             - name: Install node dependencies
               run: npm ci
 
+            - name: Directory permissions
+              run: chmod 755 -R storage bootstrap/cache
+
             - name: Build assets
               run: npm run build
 
@@ -56,10 +59,6 @@ jobs:
                 script_stop: true
                 script: |
                   cd htdocs/srv593795.hstgr.cloud
-                  
-                  # Ensure proper permissions
-                  chown -R $USER:$USER public/build
-                  chmod -R u+rwx public/build
 
                   # Check if already on master, if not, switch to master
                   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
