@@ -46,29 +46,42 @@ jobs:
               run: php artisan test
 
             - name: Deploy to server
-              if: ${{ success() }}
-              uses: appleboy/ssh-action@master
-              with:
+            if: ${{ success() }}
+            uses: appleboy/ssh-action@master
+            with:
                 host: ${{ secrets.SSH_HOST }}
                 username: ${{ secrets.SSH_USERNAME }}
                 port: ${{ secrets.SSH_PORT }}
                 key: ${{ secrets.SSH_KEY }}
                 script_stop: true
                 script: |
-                  cd htdocs/srv593795.hstgr.cloud
-                  git checkout master
-                  if git rev-parse -q --verify "refs/tags/${{ github.event.release.tag_name }}"
-                  then
+                    cd htdocs/srv593795.hstgr.cloud
+                    
+                    # Check if already on master, if not, switch to master
+                    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                    if [ "$CURRENT_BRANCH" != "master" ]; then
+                    git checkout master
+                    fi
+            
+                    # Discard uncommitted changes or stash them
+                    git reset --hard HEAD
+                    git clean -fd
+            
+                    # Handle the tag
+                    if git rev-parse -q --verify "refs/tags/${{ github.event.release.tag_name }}"; then
                     git tag -d ${{ github.event.release.tag_name }}
-                  fi
-                  git fetch --all
-                  git checkout ${{ github.event.release.tag_name }}
-                  composer install
-                  npm ci
-                  npm run build
-                  php artisan migrate --force
-                  php artisan config:cache
-                  php artisan route:cache
-                  php artisan view:cache
-                  php artisan queue:restart
-                  php artisan reverb:restart
+                    fi
+                    
+                    git fetch --all
+                    git checkout ${{ github.event.release.tag_name }}
+                    
+                    composer install
+                    npm ci
+                    npm run build
+                    php artisan migrate --force
+                    php artisan config:cache
+                    php artisan route:cache
+                    php artisan view:cache
+                    php artisan queue:restart
+                    php artisan reverb:restart
+                
