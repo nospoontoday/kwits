@@ -58,8 +58,8 @@ jobs:
                   cd htdocs/srv593795.hstgr.cloud
                   
                   # Ensure proper permissions
-                  sudo chown -R $USER:$USER public/build
-                  sudo chmod -R u+rwx public/build
+                  chown -R $USER:$USER public/build
+                  chmod -R u+rwx public/build
 
                   # Check if already on master, if not, switch to master
                   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
