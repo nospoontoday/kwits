@@ -21,10 +21,10 @@ jobs:
               with:
                 node-version: 20
 
-            - name: Created .env
+            - name: Create .env
               run: cp .env.example .env
 
-            - name: Install composer dependecies
+            - name: Install composer dependencies
               run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
             - name: Set application encryption key
@@ -54,10 +54,10 @@ jobs:
                 port: ${{ secrets.SSH_PORT }}
                 key: ${{ secrets.SSH_KEY }}
                 script_stop: true
-                script: /
+                script: |
                   cd htdocs/srv593795.hstgr.cloud
                   git checkout master
-                  if git rev-parse -q --verify "refs/tags/${{ github.event.release.tag_name }}";
+                  if git rev-parse -q --verify "refs/tags/${{ github.event.release.tag_name }}"
                   then
                     git tag -d ${{ github.event.release.tag_name }}
                   fi
@@ -72,4 +72,3 @@ jobs:
                   php artisan view:cache
                   php artisan queue:restart
                   php artisan reverb:restart
-
