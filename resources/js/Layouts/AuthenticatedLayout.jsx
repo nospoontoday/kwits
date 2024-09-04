@@ -157,7 +157,6 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 </button>
                                             </span>
                                         </Dropdown.Trigger>
-
                                         <Dropdown.Content>
                                             <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
                                             <Dropdown.Link href={route('logout')} method="post" as="button" onClick={handleLogout}>
@@ -211,6 +210,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <ResponsiveNavLink href={route('profile.edit')}>Profile</ResponsiveNavLink>
                                 <ResponsiveNavLink method="post" href={route('logout')} as="button" onClick={handleLogout}>
                                     Log Out
+                                </ResponsiveNavLink>
+                                <ResponsiveNavLink onClick={event => setShowAddFriendModal(true)}>
+                                    Add User As Friend
                                 </ResponsiveNavLink>
                             </div>
                         </div>
