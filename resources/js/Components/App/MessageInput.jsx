@@ -48,6 +48,14 @@ const MessageInput = ({ conversation = null }) => {
             return;
         }
 
+        if(newMessage == "kwits" && conversation.is_group) {
+            const formData = new FormData();
+            formData.append("group_id", conversation.id);
+            response = await axios.post(route("expense.summary"), formData);
+            console.log(response); debugger;
+            return;
+        }
+
         if (currentUser.public_key) {
             try {
 
