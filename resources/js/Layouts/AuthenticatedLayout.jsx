@@ -10,6 +10,7 @@ import { UserPlusIcon } from '@heroicons/react/24/solid';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import AddFriendModal from '@/Components/App/AddFriendModal';
+import secureStorage from 'react-secure-storage';
 
 export default function AuthenticatedLayout({ header, children }) {
     const page = usePage();
@@ -18,6 +19,12 @@ export default function AuthenticatedLayout({ header, children }) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
     const {emit} = useEventBus();
+
+    const handleLogout = async (event) => {
+        // Clear local storage and session storage
+        localStorage.clear();
+        secureStorage.clear();
+    };
 
     useEffect(() => {
 
@@ -153,7 +160,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
                                         <Dropdown.Content>
                                             <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
-                                            <Dropdown.Link href={route('logout')} method="post" as="button">
+                                            <Dropdown.Link href={route('logout')} method="post" as="button" onClick={handleLogout}>
                                                 Log Out
                                             </Dropdown.Link>
                                         </Dropdown.Content>
@@ -202,7 +209,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             <div className="mt-3 space-y-1">
                                 <ResponsiveNavLink href={route('profile.edit')}>Profile</ResponsiveNavLink>
-                                <ResponsiveNavLink method="post" href={route('logout')} as="button">
+                                <ResponsiveNavLink method="post" href={route('logout')} as="button" onClick={handleLogout}>
                                     Log Out
                                 </ResponsiveNavLink>
                             </div>
