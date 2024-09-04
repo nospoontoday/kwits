@@ -39,6 +39,9 @@ jobs:
             - name: Install node dependencies
               run: npm ci
 
+            - name: Directory permissions
+              run: chmod 755 -R storage bootstrap/cache
+
             - name: Build assets
               run: npm run build
 
