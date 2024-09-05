@@ -88,16 +88,13 @@ export default function GroupModal({ show = false, onClose = () => {} }) {
     }, [on]);
 
     return (
-        <Modal show={show} onClose={closeModal}>
+        <Modal show={show} onClose={closeModal} className="w-full sm:max-w-md">
             <form
                 onSubmit={createOrUpdateGroup}
                 className="p-6 overflow-y-auto"
             >
                 <h2 className="text-xl font-medium text-gray-900 dark:text-gray-100">
-                    {group.id
-                        ? `Edit Group "${group.name}"`
-                        : "Create new Group"
-                    }
+                    {group.id ? `Edit Group "${group.name}"` : "Create new Group"}
                 </h2>
                 
                 <div className="mt-8">
@@ -116,7 +113,7 @@ export default function GroupModal({ show = false, onClose = () => {} }) {
 
                 <div className="mt-4">
                     <InputLabel htmlFor="description" value="Description" />
-                    <TextAreaInput 
+                    <TextAreaInput
                         id="description"
                         rows="3"
                         className="mt-1 block w-full"
@@ -128,13 +125,10 @@ export default function GroupModal({ show = false, onClose = () => {} }) {
 
                 <div className="mt-4">
                     <InputLabel value="Select Users" />
-
                     <UserPicker 
                         value={
                             users.filter(
-                                (u) =>
-                                    group.owner_id !== u.id &&
-                                    data.user_ids.includes(u.id)
+                                (u) => group.owner_id !== u.id && data.user_ids.includes(u.id)
                             ) || []
                         }
                         options={users}
@@ -145,7 +139,6 @@ export default function GroupModal({ show = false, onClose = () => {} }) {
                             )
                         }
                     />
-
                     <InputError className="mt-2" message={errors.user_ids} />
                 </div>
 
