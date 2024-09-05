@@ -68,7 +68,7 @@ export default function AttachmentPreviewModal({
                 </Transition.Child>
 
                 <div className="fixed inset-0 overflow-y-auto">
-                    <div className="h-screen w-screen">
+                    <div className="h-[100dvh] w-screen">
                         <Transition.Child
                             as={Fragment}
                             enter="ease-out duration-300"
