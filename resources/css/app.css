@@ -5,6 +5,7 @@
 #app {
     height: 100vh; /* fallback */
     height: calc(var(--vh, 1vh) * 100);
+    max-height: dvh;
 }
 
 .EmojiPickerReact.epr-dark-theme {
