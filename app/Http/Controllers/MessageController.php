@@ -200,9 +200,11 @@ class MessageController extends Controller
         if($receiverId) {
             $receiver = User::find($receiverId);
 
-            $this->sendFirebaseNotification(
-                $receiver->device_token, auth()->user()->name, $messageString
-            );
+            if($receiver->device_token) {
+                $this->sendFirebaseNotification(
+                    $receiver->device_token, auth()->user()->name, $messageString
+                );
+            }
         }
 
         if($groupId) {
@@ -212,9 +214,11 @@ class MessageController extends Controller
             foreach($group->members as $member) {
                 if($member->id != auth()->id()) {
                     // Firebase push notification
-                    $this->sendFirebaseNotification(
-                        $member->device_token, auth()->user()->name, $messageString
-                    );
+                    if($member->device_token) {
+                        $this->sendFirebaseNotification(
+                            $member->device_token, auth()->user()->name, $messageString
+                        );
+                    }
                 }
             }
         }
