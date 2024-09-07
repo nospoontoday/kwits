@@ -12,6 +12,10 @@ import { useEffect, useState } from 'react';
 import AddFriendModal from '@/Components/App/AddFriendModal';
 import secureStorage from 'react-secure-storage';
 
+import { initializeApp } from "firebase/app";
+import { getMessaging, getToken } from "firebase/messaging";
+import axios from 'axios';
+
 export default function AuthenticatedLayout({ header, children }) {
     const page = usePage();
     const user = page.props.auth.user.data;
@@ -27,6 +31,43 @@ export default function AuthenticatedLayout({ header, children }) {
     };
 
     useEffect(() => {
+
+        const firebaseConfig = {
+            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+            appId: import.meta.env.VITE_FIREBASE_APP_ID,
+            measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+
+        if(!user.device_token) {
+            getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY }).then((currentToken) => {
+                if (currentToken) {
+                    axios.post(route('device-token.store'), {
+                        device_token: currentToken
+                    })
+                    .then(function (response) {
+                        // Handle success
+
+                    })
+                    .catch(function (error) {
+                        console.error('User Chat Token Error:', error);
+                    });
+                } else {
+                  // Show permission request UI
+                  console.log('No registration token available. Request permission to generate one.');
+                  // ...
+                }
+              }).catch((err) => {
+                console.log('An error occurred while retrieving token. ', err);
+                // ...
+              });
+        }
 
         conversations.forEach((conversation) => {
             let channel = `message.group.${conversation.id}`;

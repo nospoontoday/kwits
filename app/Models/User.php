@@ -34,6 +34,7 @@ class User extends Authenticatable
         'provider',
         'provider_id',
         'provider_token',
+        'device_token',
     ];
 
     protected $hidden = [
@@ -176,6 +177,7 @@ class User extends Authenticatable
             'is_admin' => (bool) $this->is_admin,
             'has_created_pin' => (bool) $this->has_created_pin,
             'public_key' => $this->public_key,
+            'device_token' => $this->device_token,
             'iv' => $this->iv,
             'pin_iv' => $this->pin_iv,
             'salt' => $this->salt,

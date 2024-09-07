@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\ProviderController;
+use App\Http\Controllers\DeviceTokenController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupController;
@@ -58,6 +59,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function() {
 
     Route::put('/key/{user}', [KeyController::class, 'update'])->name('key.update');
 
+    Route::post('/device-token', [DeviceTokenController::class, 'store'])->name('device-token.store');
 
     Route::middleware(['admin'])->group(function() {
         Route::post('/user', [UserController::class, 'store'])->name('user.store');

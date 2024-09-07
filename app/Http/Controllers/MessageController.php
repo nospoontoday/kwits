@@ -18,6 +18,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Google\Client as GoogleClient;
+use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
 {
@@ -152,16 +154,20 @@ class MessageController extends Controller
     }    
 
     public function store(StoreMessageRequest $request)
-    {
+{
+    try {
         $data = $request->validated();
         $data['sender_id'] = auth()->id();
         $receiverId = $data['receiver_id'] ?? null;
         $groupId = $data['group_id'] ?? null;
         $files = $data['attachments'] ?? [];
+
+        $messageString = $data['message_string'];
+        unset($data['message_string']);
         $message = Message::create($data);
         $attachments = [];
 
-        if($files) {
+        if ($files) {
             foreach ($files as $key => $file) {
                 $directory = 'attachments/' . Str::random(32);
                 Storage::makeDirectory($directory);
@@ -181,16 +187,110 @@ class MessageController extends Controller
             $message->attachments = $attachments;
         }
 
-        if($receiverId) {
+        if ($receiverId) {
             Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
         }
 
-        if($groupId) {
+        if ($groupId) {
             Group::updateGroupWithMessage($groupId, $message);
         }
 
         SocketMessage::dispatch($message);
 
+        if($receiverId) {
+            $receiver = User::find($receiverId);
+
+            $this->sendFirebaseNotification(
+                $receiver->device_token, auth()->user()->name, $messageString
+            );
+        }
+
+        if($groupId) {
+            //get all users except auth
+            $group = Group::find($groupId);
+
+            foreach($group->members as $member) {
+                if($member->id != auth()->id()) {
+                    // Firebase push notification
+                    $this->sendFirebaseNotification(
+                        $member->device_token, auth()->user()->name, $messageString
+                    );
+                }
+            }
+        }
+
         return new MessageResource($message);
+
+    } catch (\Throwable $th) {
+        // Log the error for debugging
+        Log::error('Error storing message: ' . $th->getMessage(), [
+            'exception' => $th,
+            'user_id' => auth()->id(),
+            'request_data' => $request->all()
+        ]);
+
+        // Return a JSON response with a meaningful message
+        return response()->json([
+            'error' => 'An error occurred while sending the message.',
+            'message' => $th->getMessage()
+        ], 500);
     }
+}
+
+private function sendFirebaseNotification(string $firebaseToken, string $title, string $messageString)
+{
+    try {
+        $title = $title;
+        $description = $messageString;
+
+        $credentialsPath = base_path("kwits-push-notification-firebase-adminsdk-f4qyk-c463c2d38f.json");
+
+        $client = new GoogleClient();
+        $client->setAuthConfig($credentialsPath);
+        $client->addScope("https://www.googleapis.com/auth/firebase.messaging");
+        $client->fetchAccessTokenWithAssertion();
+        $token = $client->getAccessToken();
+
+        $accessToken = $token['access_token'];
+
+        $headers = [
+            "Authorization: Bearer $accessToken",
+            'Content-Type: application/json'
+        ];
+
+        $data = [
+            "message" => [
+                "token" => $firebaseToken,
+                "notification" => [
+                    "title" => $title,
+                    "body" => $description,
+                ]
+            ]
+        ];
+
+        $payload = json_encode($data);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://fcm.googleapis.com/v1/projects/kwits-push-notification/messages:send');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+
+        curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($err) {
+            Log::error("Firebase notification error: $err");
+            throw new \Exception("Error sending Firebase notification: $err");
+        }
+
+    } catch (\Throwable $th) {
+        throw $th;
+    }
+}
+
 }

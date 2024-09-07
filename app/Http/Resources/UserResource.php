@@ -42,6 +42,7 @@ class UserResource extends JsonResource
             'updated_at' => $this->updated_at,
             'is_admin' => (bool) $this->is_admin,
             'has_created_pin' => (bool) $this->has_created_pin,
+            'device_token' => $this->device_token,
             'last_message' => $this->last_message,
             'last_message_date' => $this->last_message_date,
         ];

@@ -78,6 +78,7 @@ const MessageInput = ({ conversation = null }) => {
                     }));
 
                     // Assuming your backend can handle an array of encrypted messages for each recipient
+                    formData.append("message_string", newMessage);
                     formData.append("message", JSON.stringify(encryptedMessages));
 
                 } else if (conversation.is_user) {
@@ -97,6 +98,7 @@ const MessageInput = ({ conversation = null }) => {
                     }
 
                     formData.append("message", JSON.stringify(encryptedMessages));
+                    formData.append("message_string", newMessage);
                     formData.append("receiver_id", conversation.id);
                 }
             
