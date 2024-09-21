@@ -6,18 +6,26 @@ use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\CurrencyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/currencies', [CurrencyController::class, 'index']);
+Route::group(['middleware' => ['auth:api']], function() {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:api');
+    Route::post('/logout', [AuthController::class, 'logout']);
+});
+
+
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('/social-login', [AuthController::class, 'socialLogin']);
 
 Route::middleware('auth:api')->group(function () {
