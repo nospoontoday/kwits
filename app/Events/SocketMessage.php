@@ -55,4 +55,9 @@ class SocketMessage implements ShouldBroadcastNow
 
         return $channels;
     }
+
+    public function broadcastAs()
+    {
+        return 'SocketMessage';
+    }
 }

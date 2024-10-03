@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Events\MessageDeleted;
+use App\Events\NewMessage;
 use App\Events\SocketMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreMessageRequest;
@@ -32,7 +33,7 @@ class MessageController extends Controller
             ->latest()
             ->paginate(10);
 
-        return inertia('Home', [
+        return response()->json([
             'selectedConversation' => $user->toConversationArray(),
             'messages' => MessageResource::collection($messages),
         ]);
@@ -44,7 +45,7 @@ class MessageController extends Controller
             ->latest()
             ->paginate(10);
 
-        return inertia('Home', [
+        return response()->json([
             'selectedConversation' => $group->toConversationArray(),
             'messages' => MessageResource::collection($messages),
         ]);
@@ -154,92 +155,92 @@ class MessageController extends Controller
     }    
 
     public function store(StoreMessageRequest $request)
-{
-    try {
-        $data = $request->validated();
-        $data['sender_id'] = auth()->id();
-        $receiverId = $data['receiver_id'] ?? null;
-        $groupId = $data['group_id'] ?? null;
-        $files = $data['attachments'] ?? [];
+    {
+        try {
+            $data = $request->validated();
+            $data['sender_id'] = auth()->id();
+            $receiverId = $data['receiver_id'] ?? null;
+            $groupId = $data['group_id'] ?? null;
+            $files = $data['attachments'] ?? [];
 
-        $messageString = $data['message_string'];
-        unset($data['message_string']);
-        $message = Message::create($data);
-        $attachments = [];
+            $messageString = $data['message_string'];
+            unset($data['message_string']);
+            $message = Message::create($data);
+            $attachments = [];
 
-        if ($files) {
-            foreach ($files as $key => $file) {
-                $directory = 'attachments/' . Str::random(32);
-                Storage::makeDirectory($directory);
+            if ($files) {
+                foreach ($files as $key => $file) {
+                    $directory = 'attachments/' . Str::random(32);
+                    Storage::makeDirectory($directory);
 
-                $model = [
-                    'message_id' => $message->id,
-                    'name' => $file->getClientOriginalName(),
-                    'mime' => $file->getClientMimeType(),
-                    'size' => $file->getSize(),
-                    'path' => $file->store($directory, 'public'),
-                ];
+                    $model = [
+                        'message_id' => $message->id,
+                        'name' => $file->getClientOriginalName(),
+                        'mime' => $file->getClientMimeType(),
+                        'size' => $file->getSize(),
+                        'path' => $file->store($directory, 'public'),
+                    ];
 
-                $attachment = MessageAttachment::create($model);
-                $attachments[] = $attachment;
+                    $attachment = MessageAttachment::create($model);
+                    $attachments[] = $attachment;
+                }
+
+                $message->attachments = $attachments;
             }
 
-            $message->attachments = $attachments;
+            if ($receiverId) {
+                Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
+            }
+
+            if ($groupId) {
+                Group::updateGroupWithMessage($groupId, $message);
+            }
+
+            SocketMessage::dispatch($message);
+
+            if($receiverId) {
+                $receiver = User::find($receiverId);
+
+                if($receiver->device_token) {
+                    $this->sendFirebaseNotification(
+                        $receiver->device_token, auth()->user()->name, $messageString
+                    );
+                }
+            }
+
+            if($groupId) {
+                //get all users except auth
+                $group = Group::find($groupId);
+
+                foreach($group->members as $member) {
+                    if($member->id != auth()->id()) {
+                        // Firebase push notification
+                        if($member->device_token) {
+                            $this->sendFirebaseNotification(
+                                $member->device_token, auth()->user()->name, $messageString
+                            );
+                        }
+                    }
+                }
+            }
+
+            return new MessageResource($message);
+
+        } catch (\Throwable $th) {
+            // Log the error for debugging
+            Log::error('Error storing message: ' . $th->getMessage(), [
+                'exception' => $th,
+                'user_id' => auth()->id(),
+                'request_data' => $request->all()
+            ]);
+
+            // Return a JSON response with a meaningful message
+            return response()->json([
+                'error' => 'An error occurred while sending the message.',
+                'message' => $th->getMessage()
+            ], 500);
         }
-
-        if ($receiverId) {
-            Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
-        }
-
-        if ($groupId) {
-            Group::updateGroupWithMessage($groupId, $message);
-        }
-
-        SocketMessage::dispatch($message);
-
-        // if($receiverId) {
-        //     $receiver = User::find($receiverId);
-
-        //     if($receiver->device_token) {
-        //         $this->sendFirebaseNotification(
-        //             $receiver->device_token, auth()->user()->name, $messageString
-        //         );
-        //     }
-        // }
-
-        // if($groupId) {
-        //     //get all users except auth
-        //     $group = Group::find($groupId);
-
-        //     foreach($group->members as $member) {
-        //         if($member->id != auth()->id()) {
-        //             // Firebase push notification
-        //             if($member->device_token) {
-        //                 $this->sendFirebaseNotification(
-        //                     $member->device_token, auth()->user()->name, $messageString
-        //                 );
-        //             }
-        //         }
-        //     }
-        // }
-
-        return new MessageResource($message);
-
-    } catch (\Throwable $th) {
-        // Log the error for debugging
-        Log::error('Error storing message: ' . $th->getMessage(), [
-            'exception' => $th,
-            'user_id' => auth()->id(),
-            'request_data' => $request->all()
-        ]);
-
-        // Return a JSON response with a meaningful message
-        return response()->json([
-            'error' => 'An error occurred while sending the message.',
-            'message' => $th->getMessage()
-        ], 500);
     }
-}
 
 private function sendFirebaseNotification(string $firebaseToken, string $title, string $messageString)
 {

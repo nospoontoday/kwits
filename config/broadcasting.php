@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('BROADCAST_CONNECTION', 'null'),
+    'default' => env('BROADCAST_CONNECTION', 'redis'),
 
     /*
     |--------------------------------------------------------------------------
@@ -71,12 +71,17 @@ return [
 
         'log' => [
             'driver' => 'log',
+            'level' => 'debug',
         ],
 
         'null' => [
             'driver' => 'null',
         ],
 
+        'redis' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+        ],
     ],
 
 ];
