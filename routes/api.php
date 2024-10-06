@@ -3,8 +3,8 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ConversationController;
-use App\Http\Controllers\Api\ExpenseController;
-use App\Http\Controllers\Api\GroupController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\GroupController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -29,8 +29,11 @@ Route::group(['middleware' => ['auth:api']], function() {
     Route::post('/retrieve-private', [KeyController::class, 'retrievePrivateKey'])->name('key.retrieve.private');
     Route::post('/save_public_key', [KeyController::class, 'savePublicKey']);
     Route::get('/group/{group}', [MessageController::class, 'byGroup'])->name('chat.group');
+    Route::post('/group/owe-me', [GroupController::class, 'getOweMeList'])->name('group.owe-me');
+    Route::post('/group/owe-you', [GroupController::class, 'getOweYouList'])->name('group.owe-you');
     Route::get('/user/{user}', [MessageController::class, 'byUser'])->name('chat.user');
     Route::post('/message', [MessageController::class, 'store'])->name('message.store');
+    Route::post('/expense', [ExpenseController::class, 'store'])->name('expense.store');
 });
 
 

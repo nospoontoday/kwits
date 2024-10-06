@@ -18,6 +18,7 @@ use App\Jobs\DeleteGroupJob;
 use App\Models\Message;
 use App\Models\Contact;
 use App\Models\Currency;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 
 class GroupController extends Controller
@@ -198,9 +199,11 @@ class GroupController extends Controller
             $amounts = $data['amounts'];
         
             $oweMeList .= "### Currency: {$currencySymbol} ({$currencyCodeUpper})\n";
+            $count = 1;
             foreach ($amounts as $memberId => $amountData) {
                 $amountFormatted = number_format($amountData['amount'], 2); // Format amount with 2 decimal places
-                $oweMeList .= "- **{$amountData['name']}** owes you **{$currencySymbol}{$amountFormatted}**\n";
+                $oweMeList .= "{$count} - **{$amountData['name']}** owes you **{$currencySymbol}{$amountFormatted}**\n";
+                $count++;
             }
             $oweMeList .= "\n";
         }
@@ -314,9 +317,11 @@ class GroupController extends Controller
             $amounts = $data['amounts'];
     
             $oweYouList .= "### Currency: {$currencySymbol} ({$currencyCodeUpper})\n";
+            $count = 1;
             foreach ($amounts as $memberId => $amountData) {
                 $amountFormatted = number_format($amountData['amount'], 2); // Format amount with 2 decimal places
-                $oweYouList .= "- **You owe {$amountData['name']}** **{$currencySymbol}{$amountFormatted}**\n";
+                $oweYouList .= "{$count} - **You owe {$amountData['name']}** **{$currencySymbol}{$amountFormatted}**\n";
+                $count++;
             }
             $oweYouList .= "\n";
         }
