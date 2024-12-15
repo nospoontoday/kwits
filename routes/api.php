@@ -10,11 +10,19 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\KeyController;
+use App\Http\Controllers\FriendController;
+
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+
+// Public routes
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
+Route::post('/social-login', [AuthController::class, 'socialLogin']);
 
 Route::get('/currencies', [CurrencyController::class, 'index']);
 Route::group(['middleware' => ['auth:api']], function() {
@@ -33,16 +41,14 @@ Route::group(['middleware' => ['auth:api']], function() {
     Route::post('/group/owe-you', [GroupController::class, 'getOweYouList'])->name('group.owe-you');
     Route::get('/user/{user}', [MessageController::class, 'byUser'])->name('chat.user');
     Route::post('/message', [MessageController::class, 'store'])->name('message.store');
+    Route::delete('/message/{message}', [MessageController::class, 'destroy'])->name('message.destroy');
     Route::post('/expense', [ExpenseController::class, 'store'])->name('expense.store');
+    Route::get('/friends', [FriendController::class, 'index'])->name('friends');
+    Route::post('/friend/request', [FriendController::class, 'store'])->name('friend.request');
+    Route::get('/friend/requests', [FriendController::class, 'requests'])->name('friend.requests');
+    Route::post('/friend/confirm/{sender}', [FriendController::class, 'confirm'])->name('friend.confirm');
+    Route::post('/friend/deny/{sender}', [FriendController::class, 'deny'])->name('friend.deny');
 });
-
-
-
-// Public routes
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
-Route::post('/social-login', [AuthController::class, 'socialLogin']);
 
 // Route::middleware('auth:api')->group(function () {
     
