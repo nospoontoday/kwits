@@ -36,6 +36,8 @@ Route::group(['middleware' => ['auth:api']], function() {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/retrieve-private', [KeyController::class, 'retrievePrivateKey'])->name('key.retrieve.private');
     Route::post('/save_public_key', [KeyController::class, 'savePublicKey']);
+    Route::post('/save_secret_key', [KeyController::class, 'saveSecretKey']);
+    Route::post('/groups', [GroupController::class, 'store']);
     Route::get('/group/{group}', [MessageController::class, 'byGroup'])->name('chat.group');
     Route::post('/group/owe-me', [GroupController::class, 'getOweMeList'])->name('group.owe-me');
     Route::post('/group/owe-you', [GroupController::class, 'getOweYouList'])->name('group.owe-you');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\HasKeyRequest;
 use App\Http\Requests\PublicKeyRequest;
 use App\Http\Requests\RetrieveKeyRequest;
+use App\Http\Requests\SecretKeyRequest;
 use App\Http\Requests\StoreKeyRequest;
 use App\Http\Requests\UpdateKeyRequest;
 use App\Models\User;
@@ -40,6 +41,18 @@ class KeyController extends Controller
 
         // Return a response or redirect
         return response()->json(['message' => 'Public key saved successfully'], 200);
+    }
+
+    public function saveSecretKey(SecretKeyRequest $request)
+    {
+        $data = $request->validated();
+
+        $user = Auth::user();
+        $user->private_key = $data['secret_key'];
+        $user->save();
+
+        // Return a response or redirect
+        return response()->json(['message' => 'Secret key saved successfully'], 200);
     }
 
     public function update(UpdateKeyRequest $request, User $user)

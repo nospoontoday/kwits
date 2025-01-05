@@ -35,6 +35,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'public_key' => $this->public_key,
+            'private_key' => $this->private_key,
             'iv' => $this->iv,
             'pin_iv' => $this->pin_iv,
             'salt' => $this->salt,
