@@ -34,7 +34,10 @@ class GroupController extends Controller
             // Add the creator as a member of the group
             $group->members()->attach(array_unique([Auth::id(), ...$user_ids]));
 
-            return redirect()->back();
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully created a new group.",
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
